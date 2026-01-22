@@ -117,25 +117,34 @@
 
         async function sendData(res) {
             const formspreeUrl = "https://formspree.io/f/xlgjerob";
-            const dadosParaEnviar = {
-                Nome_do_Usuario: userName,
-                Recomendacao_Final: res,
-                Detalhamento_do_Risco: riskComment
+            
+            // Criamos um objeto simples para o Formspree não rejeitar
+            let payload = {
+                Nome: userName,
+                Resultado: res,
+                Comentario_Risco: riskComment
             };
 
+            // Adicionamos as perguntas com IDs curtos, mas o conteúdo é o texto inteiro
             questions.forEach((pergunta, index) => {
-                const respostaTexto = answers[index] ? "Sim" : "Não";
-                dadosParaEnviar[`Pergunta_${index + 1}_${pergunta.substring(0, 30)}...`] = `${pergunta} -> Resposta: ${respostaTexto}`;
+                payload[`Questao_${index + 1}`] = `${pergunta} | Resposta: ${answers[index] ? 'Sim' : 'Não'}`;
             });
 
             try {
-                await fetch(formspreeUrl, {
+                const response = await fetch(formspreeUrl, {
                     method: 'POST',
                     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosParaEnviar)
+                    body: JSON.stringify(payload)
                 });
-                document.getElementById('sending-status').innerText = "Análise técnica enviada com sucesso.";
-            } catch (e) { }
+                
+                if (response.ok) {
+                    document.getElementById('sending-status').innerText = "Diagnóstico enviado com sucesso!";
+                } else {
+                    document.getElementById('sending-status').innerText = "Erro ao enviar. Verifique sua conexão.";
+                }
+            } catch (e) {
+                document.getElementById('sending-status').innerText = "Erro técnico no envio.";
+            }
         }
 
         function showResult() {
