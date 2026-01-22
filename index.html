@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Processos</title>
+    <title>Diagnóstico de Processos - Apoio e Inovação</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #00457C; color: #333; }
-        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 550px; width: 90%; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 600px; width: 90%; text-align: center; }
         .hidden { display: none; }
         h2 { color: #00457C; margin-bottom: 20px; }
         p { line-height: 1.6; font-size: 1.1em; color: #555; }
         input { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
-        input:focus { border-color: #00457C; }
         button { margin: 10px; padding: 15px 30px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 16px; }
         .btn-next { background: #00457C; color: white; width: 100%; }
         .btn-sim { background: #28a745; color: white; width: 120px; }
@@ -25,14 +24,14 @@
     <div class="card">
         <div id="step-name">
             <h2>Diagnóstico de Fluxos</h2>
-            <p>Olá! Informe seu nome para começarmos o diagnóstico:</p>
+            <p>Olá! Vamos começar o diagnóstico para identificar a melhor ferramenta para seu processo?</p>
             <input type="text" id="userName" placeholder="Digite seu nome completo">
             <button class="btn-next" onclick="startFlow()">Começar diagnóstico</button>
         </div>
 
         <div id="step-questions" class="hidden">
             <p id="question-number" style="font-size: 0.9em; color: #888;"></p>
-            <h3 id="question-text">...</h3>
+            <h3 id="question-text" style="min-height: 80px; display: flex; align-items: center; justify-content: center;">...</h3>
             <div style="margin-top: 30px;">
                 <button class="btn-sim" onclick="handleAnswer(true)">Sim</button>
                 <button class="btn-nao" onclick="handleAnswer(false)">Não</button>
@@ -42,10 +41,9 @@
         <div id="step-result" class="hidden">
             <h2 id="result-title"></h2>
             <div id="result-text"></div>
-            
             <div id="calendar-area" class="hidden">
                 <p id="calendar-msg" style="margin-top: 20px; font-weight: 500;"></p>
-                <a id="booking-link" href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
+                <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
                     <button class="btn-next">Agendar reunião</button>
                 </a>
             </div>
@@ -59,15 +57,16 @@
         let answers = [];
 
         const questions = [
-            "A solicitação precisa passar por várias áreas antes de ser finalizada?",
-            "O solicitante precisa acompanhar em tempo real com quem a tarefa está?",
-            "A tarefa terá um prazo padrão (SLA) para ser concluída?",
-            "A solicitação pode ser reprovada e retornar para correção de dados?",
-            "Os dados da solicitação mudam completamente a cada vez que é aberta?", 
-            "O objetivo principal é apenas a coleta de dados e armazenamento?",
-            "Você precisa de um caminho rígido e padronizado, sem possibilidade de desvios?",
-            "O executor tem liberdade para decidir o próximo passo do fluxo?",
-            "Essa demanda ocorre menos de 3 vezes por mês?"
+            "A solicitação precisa passar por várias pessoas e áreas diferentes antes de ser finalizada?",
+            "O solicitante precisa acompanhar em tempo real com quem a sua solicitação está?",
+            "A tarefa terá um prazo padrão (SLA) definido e necessidade de acompanhamento?",
+            "A solicitação pode ser reprovada e devolvida para correção de dados em etapas anteriores?",
+            "O formulário de entrada é sempre o mesmo (campos fixos), independente dos dados inseridos?",
+            "O objetivo principal é apenas a coleta de dados padronizada em um único meio de recebimento?",
+            "Você precisa de um caminho rígido e padronizado, com controle total do fluxo e sem possibilidade de desvios?",
+            "O executor tem liberdade para decidir o próximo passo ou ele envia para quem ele quiser?",
+            "Existe necessidade de gerar KPIs e indicadores sobre o volume atendido?",
+            "Esta demanda ocorre menos de 3 vezes por mês?"
         ];
 
         function startFlow() {
@@ -82,74 +81,56 @@
             if (currentQuestion < questions.length) {
                 document.getElementById('question-number').innerText = `Pergunta ${currentQuestion + 1} de ${questions.length}`;
                 document.getElementById('question-text').innerText = questions[currentQuestion];
-            } else {
-                showResult();
-            }
+            } else { showResult(); }
         }
 
         function handleAnswer(val) {
-            answers.push(val ? "Sim" : "Não");
+            answers.push(val);
             currentQuestion++;
             updateQuestion();
         }
 
         async function sendData(res) {
             const formspreeUrl = "https://formspree.io/f/xlgjerob";
-            document.getElementById('sending-status').innerText = "Enviando diagnóstico para o consultor...";
-            
             try {
                 await fetch(formspreeUrl, {
                     method: 'POST',
                     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        Nome: userName, 
-                        Recomendacao: res, 
-                        Respostas_Detalhadas: answers 
-                    })
+                    body: JSON.stringify({ Nome: userName, Recomendacao: res, Respostas: answers.map((a, i) => `${i+1}: ${a ? 'Sim' : 'Não'}`) })
                 });
-                document.getElementById('sending-status').innerText = "Diagnóstico enviado com sucesso.";
-            } catch (e) {
-                document.getElementById('sending-status').innerText = "Erro ao enviar dados, mas você ainda pode agendar a reunião.";
-            }
+                document.getElementById('sending-status').innerText = "Diagnóstico enviado para o consultor.";
+            } catch (e) { document.getElementById('sending-status').innerText = "Erro ao enviar dados."; }
         }
 
         function showResult() {
             document.getElementById('step-questions').classList.add('hidden');
             document.getElementById('step-result').classList.remove('hidden');
-            
             const title = document.getElementById('result-title');
             const text = document.getElementById('result-text');
             const calArea = document.getElementById('calendar-area');
             const calMsg = document.getElementById('calendar-msg');
 
-            const r = answers.map(a => a === "Sim");
-            let finalRes = "";
-            
-            if (r[8]) {
-                finalRes = "Manual";
+            if (answers[9]) {
                 title.innerText = "Controle Manual";
-                text.innerHTML = `Olá <strong>${userName}</strong>. Devido à baixa frequência dessa demanda, recomendamos que o controle seja feito via e-mail ou planilha para evitar complexidade desnecessária.`;
-            } else if (r[5] && !r[0]) {
-                finalRes = "Microsoft Forms";
+                text.innerHTML = `Olá <strong>${userName}</strong>. Devido à baixa frequência, o ideal é o controle manual via e-mail ou planilha.`;
+            } else if (answers[5] && !answers[0]) {
                 title.innerText = "Microsoft Forms";
-                text.innerHTML = `Olá <strong>${userName}</strong>. O <strong>Forms</strong> é a ferramenta ideal para sua coleta de dados de forma simples e direta.`;
-                calMsg.innerHTML = "Caso sinta necessidade de apoio profissional para estruturar a lógica deste formulário, estou à disposição.";
+                text.innerHTML = `Ideal para <strong>receber informação padronizada</strong> em um único meio de recebimento. Recomendado para tarefas executadas dentro da mesma área.`;
+                calMsg.innerHTML = "Caso precise de apoio profissional para estruturar a lógica deste formulário, estou à disposição.";
                 calArea.classList.remove('hidden');
-                sendData(finalRes);
-            } else if (r[0] && r[6] && !r[4]) {
-                finalRes = "Zeev (BPM)";
+                sendData("Forms");
+            } else if (answers[0] && answers[6] && answers[8] === false) {
                 title.innerText = "Zeev (BPM)";
-                text.innerHTML = `Olá <strong>${userName}</strong>. Seu fluxo exige a governança, o rigor e a automação que apenas o <strong>Zeev</strong> oferece.`;
-                calMsg.innerHTML = "Podemos agendar uma reunião para desenharmos este processo juntos?";
+                text.innerHTML = `Seu processo envolve <strong>várias áreas</strong> e exige <strong>controle total do fluxo</strong>. O Zeev é ideal para atividades repetitivas com formulários padronizados e necessidade de <strong>KPIs de atendimento</strong>.`;
+                calMsg.innerHTML = "Podemos agendar uma reunião para desenharmos este fluxo rígido juntos?";
                 calArea.classList.remove('hidden');
-                sendData(finalRes);
+                sendData("Zeev");
             } else {
-                finalRes = "Service Desk";
                 title.innerText = "Service Desk";
-                text.innerHTML = `Olá <strong>${userName}</strong>. O <strong>Service Desk</strong> é a melhor escolha para gerir prazos e organizar a fila de atendimentos da sua área.`;
+                text.innerHTML = `Ideal para <strong>demandas de usuários híbridos</strong>. Oferece recursos para ordenar chamados, distribuir tarefas para pessoas externas e gerir <strong>prazos (SLA)</strong>.`;
                 calMsg.innerHTML = "Deseja falar com um especialista sobre a implementação?";
                 calArea.classList.remove('hidden');
-                sendData(finalRes);
+                sendData("Service Desk");
             }
         }
     </script>
