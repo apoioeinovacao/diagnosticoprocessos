@@ -10,7 +10,8 @@
         .hidden { display: none; }
         h2 { color: #00457C; margin-bottom: 20px; }
         p { line-height: 1.6; font-size: 1.1em; color: #555; }
-        input { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        input, textarea { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        textarea { height: 80px; resize: none; font-family: inherit; }
         button { margin: 10px; padding: 15px 30px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 16px; }
         .btn-next { background: #00457C; color: white; width: 100%; }
         .btn-sim { background: #28a745; color: white; width: 130px; }
@@ -24,15 +25,21 @@
     <div class="card">
         <div id="step-name">
             <h2>Diagnóstico de Processos</h2>
-            <p>Responda às questões abaixo para identificarmos a melhor solução para seu fluxo de trabalho.</p>
+            <p>Avaliação técnica para recomendação de ferramentas de automação.</p>
             <input type="text" id="userName" placeholder="Informe seu nome completo">
-            <button class="btn-next" onclick="startFlow()">Iniciar Diagnóstico</button>
+            <button class="btn-next" onclick="startFlow()">Iniciar Avaliação</button>
         </div>
 
         <div id="step-questions" class="hidden">
             <p id="question-number" style="font-size: 0.9em; color: #888;"></p>
             <h3 id="question-text" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">...</h3>
-            <div style="margin-top: 30px;">
+            
+            <div id="risk-detail-area" class="hidden">
+                <textarea id="riskDescription" placeholder="Descreva brevemente o impacto ou risco envolvido..."></textarea>
+                <button class="btn-next" onclick="saveRiskDetail()">Continuar</button>
+            </div>
+
+            <div id="standard-buttons">
                 <button class="btn-sim" onclick="handleAnswer(true)">Sim</button>
                 <button class="btn-nao" onclick="handleAnswer(false)">Não</button>
             </div>
@@ -44,7 +51,7 @@
             <div id="calendar-area" class="hidden">
                 <p id="calendar-msg" style="margin-top: 20px; font-weight: 500;"></p>
                 <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next">Agendar Consultoria</button>
+                    <button class="btn-next">Agendar Consultoria Especializada</button>
                 </a>
             </div>
             <p id="sending-status" style="font-size: 12px; color: #999; margin-top: 15px; font-style: italic;"></p>
@@ -55,19 +62,21 @@
         let userName = "";
         let currentQuestion = 0;
         let answers = [];
+        let riskComment = "Não informado ou não aplicável";
 
         const questions = [
-            "O processo vai tramitar em mais de 2 áreas até a sua conclusão?", // 0
-            "O solicitante vai precisar acompanhar o status e o andamento da tarefa em tempo real?", // 1
-            "O processo possui um tempo de resposta ou prazo de entrega (SLA) pré-definido?", // 2
-            "Deve existir possibilidade de reprova ou devolução se os dados estiverem errados?", // 3
-            "A estrutura das informações coletadas é sempre a mesma, como em um formulário padrão?", // 4
-            "O principal objetivo é centralização de informações?", // 5
-            "O processo deverá passar por algum tipo de aprovação?", // 6
-            "O processo deve seguir uma sequência de etapas rígida, sem a possibilidade de desvios manuais?", // 7
-            "O sistema deve encaminhar a tarefa automaticamente para o próximo responsável, sem escolha manual?", // 8
-            "Será fundamental gerar indicadores (KPIs) sobre o volume de solicitações e atendimentos?", // 9
-            "A frequência desta demanda é de menos de 3 vezes por mês?" // 10
+            "O processo vai tramitar em mais de 2 áreas até a sua conclusão?", 
+            "O solicitante vai precisar acompanhar o status e o andamento da tarefa em tempo real?", 
+            "O processo possui um tempo de resposta ou prazo de entrega (SLA) pré-definido?", 
+            "Deve existir possibilidade de reprova ou devolução se os dados estiverem errados?", 
+            "A estrutura das informações coletadas é sempre a mesma, como em um formulário padrão?", 
+            "O principal objetivo é a centralização de informações?", 
+            "O processo deverá passar por algum tipo de aprovação?", 
+            "O processo deve seguir uma sequência de etapas rígida, sem a possibilidade de desvios manuais?", 
+            "O sistema deve encaminhar a tarefa automaticamente para o próximo responsável, sem escolha manual?", 
+            "Será fundamental gerar indicadores (KPIs) sobre o volume de solicitações e atendimentos?", 
+            "Este processo envolve riscos críticos (financeiros, jurídicos ou operacionais)?", 
+            "A frequência desta demanda é superior a 3 vezes por mês?"
         ];
 
         function startFlow() {
@@ -87,23 +96,48 @@
 
         function handleAnswer(val) {
             answers.push(val);
+            if (currentQuestion === 10 && val === true) {
+                document.getElementById('standard-buttons').classList.add('hidden');
+                document.getElementById('risk-detail-area').classList.remove('hidden');
+                document.getElementById('question-text').innerText = "Detalhamento do Risco:";
+            } else {
+                currentQuestion++;
+                updateQuestion();
+            }
+        }
+
+        function saveRiskDetail() {
+            const detail = document.getElementById('riskDescription').value;
+            if (detail.trim()) riskComment = detail;
+            document.getElementById('risk-detail-area').classList.add('hidden');
+            document.getElementById('standard-buttons').classList.remove('hidden');
             currentQuestion++;
             updateQuestion();
         }
 
         async function sendData(res) {
             const formspreeUrl = "https://formspree.io/f/xlgjerob";
+            
+            // Aqui montamos o objeto de dados com a pergunta inteira
+            const dadosParaEnviar = {
+                Nome_do_Usuario: userName,
+                Recomendacao_Final: res,
+                Detalhamento_do_Risco: riskComment
+            };
+
+            // Adiciona cada pergunta e resposta dinamicamente
+            questions.forEach((pergunta, index) => {
+                const respostaTexto = answers[index] ? "Sim" : "Não";
+                dadosParaEnviar[`Pergunta_${index + 1}_${pergunta.substring(0, 30)}...`] = `${pergunta} -> Resposta: ${respostaTexto}`;
+            });
+
             try {
                 await fetch(formspreeUrl, {
                     method: 'POST',
                     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        Nome: userName, 
-                        Recomendacao: res, 
-                        Respostas: answers.map((a, i) => `P${i+1}: ${a ? 'Sim' : 'Não'}`) 
-                    })
+                    body: JSON.stringify(dadosParaEnviar)
                 });
-                document.getElementById('sending-status').innerText = "Diagnóstico encaminhado para análise técnica.";
+                document.getElementById('sending-status').innerText = "Análise técnica enviada com sucesso.";
             } catch (e) { }
         }
 
@@ -115,34 +149,35 @@
             const calArea = document.getElementById('calendar-area');
             const calMsg = document.getElementById('calendar-msg');
 
-            // 1. MANUAL (Frequência baixa mata os outros)
-            if (answers[10]) {
+            const eCritico = answers[10];
+            const temVolume = answers[11];
+            const eComplexo = answers[0] && answers[6];
+
+            if (!temVolume && !eCritico) {
                 title.innerText = "Gestão Manual";
-                text.innerHTML = `Prezado(a) <strong>${userName}</strong>. Devido à baixa frequência (menos de 3x por mês), o controle via e-mail ou planilhas é o mais indicado para evitar burocracia excessiva.`;
+                text.innerHTML = `Prezado(a) <strong>${userName}</strong>. Devido à baixa frequência e impacto controlado de risco, o controle via e-mail ou planilhas é o mais eficiente para este cenário atual.`;
+                sendData("Manual");
             } 
-            // 2. MICROSOFT FORMS (Centralização pura, sem muitas áreas e sem aprovações complexas)
-            else if (answers[5] && !answers[0] && !answers[6]) {
-                title.innerText = "Microsoft Forms";
-                text.innerHTML = `Sua necessidade principal é a <strong>centralização de informações</strong>. O Forms é ideal para coletas de dados que não exigem aprovações sequenciais ou tramitação entre diversos departamentos.`;
-                calMsg.innerHTML = "Deseja agendar uma reunião para estruturarmos este formulário?";
-                calArea.classList.remove('hidden');
-                sendData("Forms");
-            } 
-            // 3. ZEEV (Múltiplas áreas + Aprovação + Rigor/Automático)
-            else if (answers[0] && answers[6] && answers[7] && answers[8]) {
+            else if (eCritico || (eComplexo && answers[7] && answers[8])) {
                 title.innerText = "Zeev (BPM)";
-                text.innerHTML = `Este processo exige <strong>alta governança</strong>. O Zeev é a solução recomendada para fluxos que envolvem mais de 2 áreas, possuem <strong>etapas de aprovação</strong> e requerem um caminho rígido e automático.`;
-                calMsg.innerHTML = "Podemos agendar uma conversa técnica para desenharmos este fluxo?";
+                text.innerHTML = `Recomendamos o Zeev devido à <strong>criticidade ou complexidade</strong> detectada. É a ferramenta ideal para garantir a governança e automatizar alçadas de aprovação em processos que exigem conformidade.`;
+                calMsg.innerHTML = "Podemos agendar uma reunião técnica para desenharmos este fluxo?";
                 calArea.classList.remove('hidden');
                 sendData("Zeev");
             } 
-            // 4. SERVICE DESK (O restante: demandas híbridas, prazos e controle de chamados)
-            else {
+            else if (answers[2] || answers[1]) {
                 title.innerText = "Service Desk";
-                text.innerHTML = `Ideal para a <strong>gestão de demandas e chamados</strong>. Esta ferramenta permite o controle de prazos (SLA), ordenação de solicitações e visibilidade sobre o andamento das tarefas da equipe.`;
-                calMsg.innerHTML = "Quer entender como implementar essa central em sua área?";
+                text.innerHTML = `Indicado para a <strong>gestão de demandas e níveis de serviço (SLA)</strong>. Perfeito para organizar o fluxo de atendimento, manter o histórico e garantir o cumprimento de prazos.`;
+                calMsg.innerHTML = "Deseja entender como implementar esta central em sua área?";
                 calArea.classList.remove('hidden');
                 sendData("Service Desk");
+            }
+            else {
+                title.innerText = "Microsoft Forms";
+                text.innerHTML = `Solução recomendada para <strong>centralização de dados padronizados</strong>. Ideal para processos de coleta de informações que não exigem fluxos complexos de aprovação entre áreas.`;
+                calMsg.innerHTML = "Deseja auxílio na estruturação deste formulário?";
+                calArea.classList.remove('hidden');
+                sendData("Forms");
             }
         }
     </script>
