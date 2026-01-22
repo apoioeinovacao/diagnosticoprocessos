@@ -51,7 +51,7 @@
             <div id="calendar-area" class="hidden">
                 <p id="calendar-msg" style="margin-top: 20px; font-weight: 500;"></p>
                 <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next">Agendar Consultoria Especializada</button>
+                    <button class="btn-next">Agendar reunião com Alexandre</button>
                 </a>
             </div>
             <p id="sending-status" style="font-size: 12px; color: #999; margin-top: 15px; font-style: italic;"></p>
@@ -117,15 +117,12 @@
 
         async function sendData(res) {
             const formspreeUrl = "https://formspree.io/f/xlgjerob";
-            
-            // Aqui montamos o objeto de dados com a pergunta inteira
             const dadosParaEnviar = {
                 Nome_do_Usuario: userName,
                 Recomendacao_Final: res,
                 Detalhamento_do_Risco: riskComment
             };
 
-            // Adiciona cada pergunta e resposta dinamicamente
             questions.forEach((pergunta, index) => {
                 const respostaTexto = answers[index] ? "Sim" : "Não";
                 dadosParaEnviar[`Pergunta_${index + 1}_${pergunta.substring(0, 30)}...`] = `${pergunta} -> Resposta: ${respostaTexto}`;
@@ -161,21 +158,21 @@
             else if (eCritico || (eComplexo && answers[7] && answers[8])) {
                 title.innerText = "Zeev (BPM)";
                 text.innerHTML = `Recomendamos o Zeev devido à <strong>criticidade ou complexidade</strong> detectada. É a ferramenta ideal para garantir a governança e automatizar alçadas de aprovação em processos que exigem conformidade.`;
-                calMsg.innerHTML = "Podemos agendar uma reunião técnica para desenharmos este fluxo?";
+                calMsg.innerHTML = "Podemos conversar para desenharmos este fluxo juntos?";
                 calArea.classList.remove('hidden');
                 sendData("Zeev");
             } 
             else if (answers[2] || answers[1]) {
                 title.innerText = "Service Desk";
                 text.innerHTML = `Indicado para a <strong>gestão de demandas e níveis de serviço (SLA)</strong>. Perfeito para organizar o fluxo de atendimento, manter o histórico e garantir o cumprimento de prazos.`;
-                calMsg.innerHTML = "Deseja entender como implementar esta central em sua área?";
+                calMsg.innerHTML = "Deseja agendar um horário para entender como implementar esta central?";
                 calArea.classList.remove('hidden');
                 sendData("Service Desk");
             }
             else {
                 title.innerText = "Microsoft Forms";
                 text.innerHTML = `Solução recomendada para <strong>centralização de dados padronizados</strong>. Ideal para processos de coleta de informações que não exigem fluxos complexos de aprovação entre áreas.`;
-                calMsg.innerHTML = "Deseja auxílio na estruturação deste formulário?";
+                calMsg.innerHTML = "Precisa de apoio para estruturar este formulário?";
                 calArea.classList.remove('hidden');
                 sendData("Forms");
             }
