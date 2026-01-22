@@ -23,10 +23,10 @@
 
     <div class="card">
         <div id="step-name">
-            <h2>Diagnóstico de Fluxos</h2>
-            <p>Olá! Vamos começar o diagnóstico para identificar a melhor ferramenta para seu processo?</p>
-            <input type="text" id="userName" placeholder="Digite seu nome completo">
-            <button class="btn-next" onclick="startFlow()">Começar diagnóstico</button>
+            <h2>Diagnóstico de Processos</h2>
+            <p>Responda às questões abaixo para identificarmos a melhor solução para seu fluxo de trabalho.</p>
+            <input type="text" id="userName" placeholder="Informe seu nome completo">
+            <button class="btn-next" onclick="startFlow()">Iniciar Diagnóstico</button>
         </div>
 
         <div id="step-questions" class="hidden">
@@ -44,7 +44,7 @@
             <div id="calendar-area" class="hidden">
                 <p id="calendar-msg" style="margin-top: 20px; font-weight: 500;"></p>
                 <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next">Agendar reunião</button>
+                    <button class="btn-next">Agendar Consultoria</button>
                 </a>
             </div>
             <p id="sending-status" style="font-size: 12px; color: #999; margin-top: 15px; font-style: italic;"></p>
@@ -57,16 +57,17 @@
         let answers = [];
 
         const questions = [
-            "A solicitação precisa passar por várias pessoas e áreas diferentes antes de ser finalizada?",
-            "O solicitante precisa acompanhar em tempo real com quem a sua solicitação está?",
-            "A tarefa terá um prazo padrão (SLA) definido e necessidade de acompanhamento?",
-            "A solicitação pode ser reprovada e devolvida para correção de dados em etapas anteriores?",
-            "Este processo é repetitivo e utiliza sempre os mesmos campos de formulário (Ex: Lançamento de NF, Férias)?",
-            "O objetivo principal é apenas a coleta de dados padronizada em um único meio de recebimento?",
-            "Você precisa de um caminho rígido, onde o sistema controle o fluxo sem permitir desvios manuais?",
-            "O caminho da solicitação deve ser automático, impedindo que o executor escolha para quem enviar?",
-            "Existe necessidade de gerar KPIs e indicadores sobre o volume e tempo de atendimento?",
-            "Esta demanda ocorre menos de 3 vezes por mês?"
+            "O processo vai tramitar em mais de 2 áreas até a sua conclusão?", // 0
+            "O solicitante vai precisar acompanhar o status e o andamento da tarefa em tempo real?", // 1
+            "O processo possui um tempo de resposta ou prazo de entrega (SLA) pré-definido?", // 2
+            "Deve existir possibilidade de reprova ou devolução se os dados estiverem errados?", // 3
+            "A estrutura das informações coletadas é sempre a mesma, como em um formulário padrão?", // 4
+            "O principal objetivo é centralização de informações?", // 5
+            "O processo deverá passar por algum tipo de aprovação?", // 6
+            "O processo deve seguir uma sequência de etapas rígida, sem a possibilidade de desvios manuais?", // 7
+            "O sistema deve encaminhar a tarefa automaticamente para o próximo responsável, sem escolha manual?", // 8
+            "Será fundamental gerar indicadores (KPIs) sobre o volume de solicitações e atendimentos?", // 9
+            "A frequência desta demanda é de menos de 3 vezes por mês?" // 10
         ];
 
         function startFlow() {
@@ -96,9 +97,13 @@
                 await fetch(formspreeUrl, {
                     method: 'POST',
                     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Nome: userName, Recomendacao: res, Respostas: answers.map((a, i) => `P${i+1}: ${a ? 'Sim' : 'Não'}`) })
+                    body: JSON.stringify({ 
+                        Nome: userName, 
+                        Recomendacao: res, 
+                        Respostas: answers.map((a, i) => `P${i+1}: ${a ? 'Sim' : 'Não'}`) 
+                    })
                 });
-                document.getElementById('sending-status').innerText = "Dados enviados para análise.";
+                document.getElementById('sending-status').innerText = "Diagnóstico encaminhado para análise técnica.";
             } catch (e) { }
         }
 
@@ -110,28 +115,32 @@
             const calArea = document.getElementById('calendar-area');
             const calMsg = document.getElementById('calendar-msg');
 
-            if (answers[9]) {
-                title.innerText = "Controle Manual";
-                text.innerHTML = `Olá <strong>${userName}</strong>. Devido à baixa frequência, recomendamos o uso de e-mail ou planilhas para este controle.`;
+            // 1. MANUAL (Frequência baixa mata os outros)
+            if (answers[10]) {
+                title.innerText = "Gestão Manual";
+                text.innerHTML = `Prezado(a) <strong>${userName}</strong>. Devido à baixa frequência (menos de 3x por mês), o controle via e-mail ou planilhas é o mais indicado para evitar burocracia excessiva.`;
             } 
-            else if (answers[5] && !answers[0]) {
+            // 2. MICROSOFT FORMS (Centralização pura, sem muitas áreas e sem aprovações complexas)
+            else if (answers[5] && !answers[0] && !answers[6]) {
                 title.innerText = "Microsoft Forms";
-                text.innerHTML = `Ideal para <strong>receber informação padronizada</strong> em um único meio. Recomendado para ações simples em uma mesma área.`;
-                calMsg.innerHTML = "Caso precise de apoio profissional para estruturar a lógica deste formulário, estou à disposição.";
+                text.innerHTML = `Sua necessidade principal é a <strong>centralização de informações</strong>. O Forms é ideal para coletas de dados que não exigem aprovações sequenciais ou tramitação entre diversos departamentos.`;
+                calMsg.innerHTML = "Deseja agendar uma reunião para estruturarmos este formulário?";
                 calArea.classList.remove('hidden');
                 sendData("Forms");
             } 
-            else if (answers[0] && answers[6] && answers[7]) {
+            // 3. ZEEV (Múltiplas áreas + Aprovação + Rigor/Automático)
+            else if (answers[0] && answers[6] && answers[7] && answers[8]) {
                 title.innerText = "Zeev (BPM)";
-                text.innerHTML = `Seu processo envolve <strong>várias áreas</strong> e exige <strong>controle total do fluxo</strong>. O Zeev é ideal para atividades repetitivas com formulários fixos e necessidade de <strong>KPIs de volume atendido</strong>.`;
-                calMsg.innerHTML = "Podemos agendar uma reunião para desenharmos este fluxo rígido juntos?";
+                text.innerHTML = `Este processo exige <strong>alta governança</strong>. O Zeev é a solução recomendada para fluxos que envolvem mais de 2 áreas, possuem <strong>etapas de aprovação</strong> e requerem um caminho rígido e automático.`;
+                calMsg.innerHTML = "Podemos agendar uma conversa técnica para desenharmos este fluxo?";
                 calArea.classList.remove('hidden');
                 sendData("Zeev");
             } 
+            // 4. SERVICE DESK (O restante: demandas híbridas, prazos e controle de chamados)
             else {
                 title.innerText = "Service Desk";
-                text.innerHTML = `Ideal para <strong>demandas híbridas</strong>. Oferece recursos para ordenar chamados, gerir <strong>prazos (SLA)</strong> e distribuir tarefas para pessoas externas ou da mesma área.`;
-                calMsg.innerHTML = "Deseja falar com um especialista sobre a implementação?";
+                text.innerHTML = `Ideal para a <strong>gestão de demandas e chamados</strong>. Esta ferramenta permite o controle de prazos (SLA), ordenação de solicitações e visibilidade sobre o andamento das tarefas da equipe.`;
+                calMsg.innerHTML = "Quer entender como implementar essa central em sua área?";
                 calArea.classList.remove('hidden');
                 sendData("Service Desk");
             }
