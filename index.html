@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Eficiência Operacional</title>
+    <title>Diagnóstico de Soluções Organizacionais</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #002D54; color: #333; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); max-width: 650px; width: 95%; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 600px; width: 90%; text-align: center; }
         .hidden { display: none; }
-        h2 { color: #002D54; margin-bottom: 10px; font-weight: 700; }
-        p { line-height: 1.5; color: #666; }
-        input { padding: 12px; width: 85%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
-        button { margin: 10px; padding: 15px 25px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; font-size: 15px; }
+        h2 { color: #002D54; margin-bottom: 20px; font-weight: bold; }
+        p { line-height: 1.6; font-size: 1.1em; color: #444; }
+        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        button { padding: 15px 30px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn-next { background: #002D54; color: white; width: 100%; }
-        .btn-sim { background: #1D8348; color: white; width: 45%; }
-        .btn-nao { background: #A93226; color: white; width: 45%; }
-        button:hover { opacity: 0.85; transform: scale(1.02); }
-        #result-text { text-align: left; background: #F4F7F9; padding: 25px; border-top: 4px solid #002D54; margin-top: 20px; border-radius: 0 0 8px 8px; }
-        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; background: #E5E7E9; font-size: 12px; font-weight: bold; color: #566573; margin-bottom: 10px; }
+        .btn-sim { background: #1D8348; color: white; flex: 1; }
+        .btn-nao { background: #A93226; color: white; flex: 1; }
+        #result-text { text-align: left; background: #f8f9fa; padding: 25px; border-left: 6px solid #002D54; margin-top: 20px; border-radius: 4px; }
+        .progress { font-size: 0.9em; color: #888; margin-bottom: 10px; font-weight: bold; }
+        .block-title { color: #002D54; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div id="step-name">
-            <span class="badge">ESTRUTURAÇÃO DE PROCESSOS</span>
-            <h2>Diagnóstico de Soluções</h2>
-            <p>Identifique a ferramenta ideal com base em risco, compliance e volume operacional.</p>
-            <input type="text" id="userName" placeholder="Seu nome e cargo">
-            <button class="btn-next" onclick="startFlow()">Iniciar Análise Técnica</button>
+            <h2>Diagnóstico de Processos</h2>
+            <p>Responda às 12 perguntas para identificarmos a solução ideal.</p>
+            <button class="btn-next" onclick="startFlow()">Iniciar Diagnóstico</button>
         </div>
 
         <div id="step-questions" class="hidden">
-            <p id="question-number" style="font-weight: bold; color: #002D54;"></p>
-            <h3 id="question-text" style="min-height: 80px;">...</h3>
-            <div id="standard-buttons">
+            <span id="block-label" class="block-title"></span>
+            <div id="progress" class="progress"></div>
+            <h3 id="question-text" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">...</h3>
+            <div class="btn-group">
                 <button class="btn-sim" onclick="handleAnswer(true)">Sim</button>
                 <button class="btn-nao" onclick="handleAnswer(false)">Não</button>
             </div>
@@ -43,33 +42,30 @@
         <div id="step-result" class="hidden">
             <h2 id="result-title"></h2>
             <div id="result-text"></div>
-            <div id="calendar-area" class="hidden">
-                <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next" style="margin-top: 20px;">Agendar Alinhamento Estratégico</button>
-                </a>
-            </div>
+            <button class="btn-next" style="margin-top:20px;" onclick="location.reload()">Refazer</button>
         </div>
     </div>
 
     <script>
-        let userName = "";
         let currentQuestion = 0;
         let answers = [];
 
-        // Perguntas baseadas em Lógica Existencial de Processos (Ex: Auditoria, Risco, SLA, Repetibilidade)
         const questions = [
-            "O processo possui riscos críticos (financeiros, fiscais ou jurídicos) que exigem trilha de auditoria?", 
-            "Existe uma regra de negócio rígida (alçadas de aprovação por valor ou cargo) que não pode ser burlada?", 
-            "Há necessidade de integração automática com outros sistemas (ERP, BI) para evitar redigitação?",
-            "O foco principal é o controle de prazos (SLA) e a satisfação do 'cliente' que faz a solicitação?", 
-            "O volume de solicitações é recorrente (mais de 10 por mês) a ponto de gerar gargalos manuais?", 
-            "O processo exige que o solicitante anexe documentos e acompanhe o status em tempo real?", 
-            "O objetivo principal é apenas a coleta de dados para posterior tabulação, sem um fluxo de aprovação?"
+            { t: "Bloco 1 — Existe fluxo?", q: "Após a solicitação inicial, existem etapas claras e sequenciais até a conclusão?" },
+            { t: "Bloco 1 — Existe fluxo?", q: "Na maioria dos casos, essas etapas ocorrem sempre na mesma ordem?" },
+            { t: "Bloco 1 — Existe fluxo?", q: "Pessoas diferentes executam esse trabalho seguindo o mesmo padrão?" },
+            { t: "Bloco 2 — Papel do sistema", q: "O sistema precisa validar regras ou impedir o avanço do pedido se faltar algo?" },
+            { t: "Bloco 2 — Papel do sistema", q: "O sistema deve notificar automaticamente o próximo responsável por cada tarefa?" },
+            { t: "Bloco 2 — Papel do sistema", q: "É importante medir o tempo de cada etapa individual, e não apenas o prazo total?" },
+            { t: "Bloco 3 — Atendimento ou fluxo", q: "A demanda entra em uma fila comum para que alguém da equipe assuma o atendimento?" },
+            { t: "Bloco 3 — Atendimento ou fluxo", q: "O controle principal é identificar com qual atendente o pedido está no momento?" },
+            { t: "Bloco 3 — Atendimento ou fluxo", q: "O sucesso depende mais de cumprir o prazo de resposta (SLA) do que de seguir etapas rígidas?" },
+            { t: "Maturidade", q: "As regras atuais são claras o suficiente para não gerar dúvidas frequentes na execução?" },
+            { t: "Maturidade", q: "As exceções ou casos atípicos representam menos da metade dos atendimentos?" },
+            { t: "Maturidade", q: "Hoje, a maior dificuldade não é entender como o processo deveria funcionar na teoria?" }
         ];
 
         function startFlow() {
-            userName = document.getElementById('userName').value;
-            if (!userName.trim()) { alert("Por favor, identifique-se."); return; }
             document.getElementById('step-name').classList.add('hidden');
             document.getElementById('step-questions').classList.remove('hidden');
             updateQuestion();
@@ -77,8 +73,9 @@
 
         function updateQuestion() {
             if (currentQuestion < questions.length) {
-                document.getElementById('question-number').innerText = `Critério ${currentQuestion + 1}`;
-                document.getElementById('question-text').innerText = questions[currentQuestion];
+                document.getElementById('block-label').innerText = questions[currentQuestion].t;
+                document.getElementById('progress').innerText = `Pergunta ${currentQuestion + 1} de 12`;
+                document.getElementById('question-text').innerText = questions[currentQuestion].q;
             } else { showResult(); }
         }
 
@@ -90,40 +87,36 @@
 
         function showResult() {
             document.getElementById('step-questions').classList.add('hidden');
-            const resultDiv = document.getElementById('step-result');
-            resultDiv.classList.remove('hidden');
-            
+            document.getElementById('step-result').classList.remove('hidden');
             const title = document.getElementById('result-title');
             const text = document.getElementById('result-text');
-            const calArea = document.getElementById('calendar-area');
 
-            // Lógica de Recomendação (Prioridade por Risco e Governança)
-            const r_Risco = answers[0];
-            const r_RegraRigida = answers[1];
-            const r_Integracao = answers[2];
-            const r_SLA = answers[3];
-            const r_Volume = answers[4];
-            const r_Tickets = answers[5];
-            const r_ColetaPura = answers[6];
+            // Agrupamento de respostas por bloco
+            const b1 = answers.slice(0, 3).filter(a => a).length; // Fluxo
+            const b2 = answers.slice(3, 6).filter(a => a).length; // Papel Sistema (Zeev)
+            const b3 = answers.slice(6, 9).filter(a => a).length; // Atendimento (Movidesk)
+            const b4 = answers.slice(9, 12).filter(a => a).length; // Maturidade
 
-            if ((r_Risco || r_RegraRigida || r_Integracao) && r_Volume) {
-                title.innerText = "Zeev (BPM Enterprise)";
-                text.innerHTML = `<strong>Análise Técnica:</strong> Recomendamos o uso de BPMS devido à alta necessidade de <strong>governança e mitigação de riscos</strong>. A solução garante que nenhuma etapa seja pulada e permite auditoria completa, protegendo o compliance da empresa.`;
-                calArea.classList.remove('hidden');
+            // Lógica do gabarito atualizado
+            if (b4 <= 1) {
+                title.innerText = "Redesenhar antes de automatizar";
+                text.innerHTML = "O processo apresenta baixa maturidade. É necessário definir as regras e o funcionamento teórico antes de aplicar qualquer tecnologia.";
             } 
-            else if (r_SLA || r_Tickets) {
+            else if (b1 <= 1) {
+                title.innerText = "Melhorar processo";
+                text.innerHTML = "Embora existam regras, o fluxo sequencial ainda não está consolidado ou padronizado o suficiente para automação.";
+            }
+            else if (b2 >= 2 && b4 >= 2) {
+                title.innerText = "Zeev BPM";
+                text.innerHTML = "Solução indicada para controle de fluxo, orquestração de tarefas entre responsáveis e validação de regras automáticas.";
+            }
+            else if (b3 >= 2) {
                 title.innerText = "Movidesk / Service Desk";
-                text.innerHTML = `<strong>Análise Técnica:</strong> O foco aqui é <strong>gestão de atendimento</strong>. Esta ferramenta é ideal para organizar a fila de trabalho por prioridade e garantir que o SLA de resposta seja cumprido, melhorando a percepção de valor das áreas de apoio.`;
-                calArea.classList.remove('hidden');
-            } 
-            else if (r_ColetaPura && r_Volume) {
-                title.innerText = "Microsoft Forms";
-                text.innerHTML = `<strong>Análise Técnica:</strong> Processo de baixa complexidade lógica. O Forms resolverá a <strong>padronização da entrada de dados</strong>, eliminando o uso de e-mails desestruturados para coletas simples.`;
-                calArea.classList.remove('hidden');
-            } 
+                text.innerHTML = "Solução indicada para gestão de atendimentos, controle de filas e monitoramento de prazos (SLA).";
+            }
             else {
-                title.innerText = "Gestão Operacional Local";
-                text.innerHTML = `<strong>Análise Técnica:</strong> O volume ou risco atual não justifica o custo de implementação em plataforma. Recomenda-se manter o controle via <strong>e-mail ou planilhas compartilhadas</strong> até que o processo ganhe maturidade ou escala.`;
+                title.innerText = "Forms";
+                text.innerHTML = "Indicado para centralizar o recebimento de informações em um único local, sem necessidade de fluxos ou regras complexas de sistema.";
             }
         }
     </script>
