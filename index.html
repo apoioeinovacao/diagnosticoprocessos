@@ -3,42 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Processos - Apoio e Inovação</title>
+    <title>Diagnóstico de Eficiência Operacional</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #00457C; color: #333; }
-        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 600px; width: 90%; text-align: center; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #002D54; color: #333; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); max-width: 650px; width: 95%; text-align: center; }
         .hidden { display: none; }
-        h2 { color: #00457C; margin-bottom: 20px; }
-        p { line-height: 1.6; font-size: 1.1em; color: #555; }
-        input, textarea { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
-        textarea { height: 80px; resize: none; font-family: inherit; }
-        button { margin: 10px; padding: 15px 30px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 16px; }
-        .btn-next { background: #00457C; color: white; width: 100%; }
-        .btn-sim { background: #28a745; color: white; width: 130px; }
-        .btn-nao { background: #dc3545; color: white; width: 130px; }
-        button:hover { opacity: 0.9; transform: translateY(-2px); }
-        #result-text { text-align: left; background: #f8f9fa; padding: 20px; border-left: 5px solid #00457C; margin-top: 20px; border-radius: 4px; }
+        h2 { color: #002D54; margin-bottom: 10px; font-weight: 700; }
+        p { line-height: 1.5; color: #666; }
+        input { padding: 12px; width: 85%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { margin: 10px; padding: 15px 25px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; font-size: 15px; }
+        .btn-next { background: #002D54; color: white; width: 100%; }
+        .btn-sim { background: #1D8348; color: white; width: 45%; }
+        .btn-nao { background: #A93226; color: white; width: 45%; }
+        button:hover { opacity: 0.85; transform: scale(1.02); }
+        #result-text { text-align: left; background: #F4F7F9; padding: 25px; border-top: 4px solid #002D54; margin-top: 20px; border-radius: 0 0 8px 8px; }
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; background: #E5E7E9; font-size: 12px; font-weight: bold; color: #566573; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div id="step-name">
-            <h2>Diagnóstico de Processos</h2>
-            <p>Avaliação técnica para recomendação de ferramentas de automação.</p>
-            <input type="text" id="userName" placeholder="Informe seu nome completo">
-            <button class="btn-next" onclick="startFlow()">Iniciar Avaliação</button>
+            <span class="badge">ESTRUTURAÇÃO DE PROCESSOS</span>
+            <h2>Diagnóstico de Soluções</h2>
+            <p>Identifique a ferramenta ideal com base em risco, compliance e volume operacional.</p>
+            <input type="text" id="userName" placeholder="Seu nome e cargo">
+            <button class="btn-next" onclick="startFlow()">Iniciar Análise Técnica</button>
         </div>
 
         <div id="step-questions" class="hidden">
-            <p id="question-number" style="font-size: 0.9em; color: #888;"></p>
-            <h3 id="question-text" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">...</h3>
-            
-            <div id="risk-detail-area" class="hidden">
-                <textarea id="riskDescription" placeholder="Descreva brevemente o impacto ou risco envolvido..."></textarea>
-                <button class="btn-next" onclick="saveRiskDetail()">Continuar</button>
-            </div>
-
+            <p id="question-number" style="font-weight: bold; color: #002D54;"></p>
+            <h3 id="question-text" style="min-height: 80px;">...</h3>
             <div id="standard-buttons">
                 <button class="btn-sim" onclick="handleAnswer(true)">Sim</button>
                 <button class="btn-nao" onclick="handleAnswer(false)">Não</button>
@@ -49,12 +44,10 @@
             <h2 id="result-title"></h2>
             <div id="result-text"></div>
             <div id="calendar-area" class="hidden">
-                <p id="calendar-msg" style="margin-top: 20px; font-weight: 500;"></p>
                 <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next">Agendar reunião com Alexandre</button>
+                    <button class="btn-next" style="margin-top: 20px;">Agendar Alinhamento Estratégico</button>
                 </a>
             </div>
-            <p id="sending-status" style="font-size: 12px; color: #999; margin-top: 15px; font-style: italic;"></p>
         </div>
     </div>
 
@@ -62,26 +55,21 @@
         let userName = "";
         let currentQuestion = 0;
         let answers = [];
-        let riskComment = "Não informado";
 
+        // Perguntas baseadas em Lógica Existencial de Processos (Ex: Auditoria, Risco, SLA, Repetibilidade)
         const questions = [
-            "O processo vai tramitar em mais de 2 áreas até a sua conclusão?", 
-            "O solicitante vai precisar acompanhar o status e o andamento da tarefa em tempo real?", 
-            "O processo possui um tempo de resposta ou prazo de entrega (SLA) pré-definido?", 
-            "Deve existir possibilidade de reprova ou devolução se os dados estiverem errados?", 
-            "A estrutura das informações coletadas é sempre a mesma, como em um formulário padrão?", 
-            "O principal objetivo é a centralização de informações?", 
-            "O processo deverá passar por algum tipo de aprovação?", 
-            "O processo deve seguir uma sequência de etapas rígida, sem a possibilidade de desvios manuais?", 
-            "O sistema deve encaminhar a tarefa automaticamente para o próximo responsável, sem escolha manual?", 
-            "Será fundamental gerar indicadores (KPIs) sobre o volume de solicitações e atendimentos?", 
-            "Este processo envolve riscos críticos (financeiros, jurídicos ou operacionais)?", 
-            "A frequência desta demanda é superior a 3 vezes por mês?"
+            "O processo possui riscos críticos (financeiros, fiscais ou jurídicos) que exigem trilha de auditoria?", 
+            "Existe uma regra de negócio rígida (alçadas de aprovação por valor ou cargo) que não pode ser burlada?", 
+            "Há necessidade de integração automática com outros sistemas (ERP, BI) para evitar redigitação?",
+            "O foco principal é o controle de prazos (SLA) e a satisfação do 'cliente' que faz a solicitação?", 
+            "O volume de solicitações é recorrente (mais de 10 por mês) a ponto de gerar gargalos manuais?", 
+            "O processo exige que o solicitante anexe documentos e acompanhe o status em tempo real?", 
+            "O objetivo principal é apenas a coleta de dados para posterior tabulação, sem um fluxo de aprovação?"
         ];
 
         function startFlow() {
             userName = document.getElementById('userName').value;
-            if (!userName.trim()) { alert("Por favor, informe seu nome."); return; }
+            if (!userName.trim()) { alert("Por favor, identifique-se."); return; }
             document.getElementById('step-name').classList.add('hidden');
             document.getElementById('step-questions').classList.remove('hidden');
             updateQuestion();
@@ -89,94 +77,53 @@
 
         function updateQuestion() {
             if (currentQuestion < questions.length) {
-                document.getElementById('question-number').innerText = `Pergunta ${currentQuestion + 1} de ${questions.length}`;
+                document.getElementById('question-number').innerText = `Critério ${currentQuestion + 1}`;
                 document.getElementById('question-text').innerText = questions[currentQuestion];
             } else { showResult(); }
         }
 
         function handleAnswer(val) {
             answers.push(val);
-            if (currentQuestion === 10 && val === true) {
-                document.getElementById('standard-buttons').classList.add('hidden');
-                document.getElementById('risk-detail-area').classList.remove('hidden');
-                document.getElementById('question-text').innerText = "Detalhamento do Risco:";
-            } else {
-                currentQuestion++;
-                updateQuestion();
-            }
-        }
-
-        function saveRiskDetail() {
-            const detail = document.getElementById('riskDescription').value;
-            if (detail.trim()) riskComment = detail;
-            document.getElementById('risk-detail-area').classList.add('hidden');
-            document.getElementById('standard-buttons').classList.remove('hidden');
             currentQuestion++;
             updateQuestion();
         }
 
-        async function sendData(res) {
-            const formspreeUrl = "https://formspree.io/f/xlgjerob";
-            
-            // Payload super simplificado para passar pelo filtro de SPAM corporativo
-            let payload = {
-                Solicitante: userName,
-                Solucao_Recomendada: res,
-                Descricao_do_Risco: riskComment
-            };
-
-            // Usando termos genéricos para o Outlook não bloquear
-            questions.forEach((q, i) => {
-                payload[`Info_${i + 1}`] = `${q} -> Resposta: ${answers[i] ? 'Sim' : 'Não'}`;
-            });
-
-            try {
-                await fetch(formspreeUrl, {
-                    method: 'POST',
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                document.getElementById('sending-status').innerText = "Relatório processado com sucesso.";
-            } catch (e) { }
-        }
-
         function showResult() {
             document.getElementById('step-questions').classList.add('hidden');
-            document.getElementById('step-result').classList.remove('hidden');
+            const resultDiv = document.getElementById('step-result');
+            resultDiv.classList.remove('hidden');
+            
             const title = document.getElementById('result-title');
             const text = document.getElementById('result-text');
             const calArea = document.getElementById('calendar-area');
-            const calMsg = document.getElementById('calendar-msg');
 
-            const eCritico = answers[10];
-            const temVolume = answers[11];
-            const eComplexo = answers[0] && answers[6];
+            // Lógica de Recomendação (Prioridade por Risco e Governança)
+            const r_Risco = answers[0];
+            const r_RegraRigida = answers[1];
+            const r_Integracao = answers[2];
+            const r_SLA = answers[3];
+            const r_Volume = answers[4];
+            const r_Tickets = answers[5];
+            const r_ColetaPura = answers[6];
 
-            if (!temVolume && !eCritico) {
-                title.innerText = "Gestão Manual";
-                text.innerHTML = `Prezado(a) <strong>${userName}</strong>. Devido à baixa frequência e impacto controlado de risco, o controle via e-mail ou planilhas é o mais eficiente para este cenário atual.`;
-                sendData("Manual");
-            } 
-            else if (eCritico || (eComplexo && answers[7] && answers[8])) {
-                title.innerText = "Zeev (BPM)";
-                text.innerHTML = `Recomendamos o Zeev devido à <strong>criticidade ou complexidade</strong> detectada. É a ferramenta ideal para garantir a governança e automatizar alçadas de aprovação.`;
-                calMsg.innerHTML = "Podemos conversar para desenharmos este fluxo juntos?";
+            if ((r_Risco || r_RegraRigida || r_Integracao) && r_Volume) {
+                title.innerText = "Zeev (BPM Enterprise)";
+                text.innerHTML = `<strong>Análise Técnica:</strong> Recomendamos o uso de BPMS devido à alta necessidade de <strong>governança e mitigação de riscos</strong>. A solução garante que nenhuma etapa seja pulada e permite auditoria completa, protegendo o compliance da empresa.`;
                 calArea.classList.remove('hidden');
-                sendData("Zeev");
             } 
-            else if (answers[2] || answers[1]) {
-                title.innerText = "Service Desk";
-                text.innerHTML = `Indicado para a <strong>gestão de demandas e níveis de serviço (SLA)</strong>. Perfeito para organizar o fluxo de atendimento e garantir o cumprimento de prazos.`;
-                calMsg.innerHTML = "Deseja agendar um horário para entender como implementar esta central?";
+            else if (r_SLA || r_Tickets) {
+                title.innerText = "Movidesk / Service Desk";
+                text.innerHTML = `<strong>Análise Técnica:</strong> O foco aqui é <strong>gestão de atendimento</strong>. Esta ferramenta é ideal para organizar a fila de trabalho por prioridade e garantir que o SLA de resposta seja cumprido, melhorando a percepção de valor das áreas de apoio.`;
                 calArea.classList.remove('hidden');
-                sendData("Service Desk");
-            }
-            else {
+            } 
+            else if (r_ColetaPura && r_Volume) {
                 title.innerText = "Microsoft Forms";
-                text.innerHTML = `Solução recomendada para <strong>centralização de dados padronizados</strong>. Ideal para processos de coleta de informações sem fluxos complexos.`;
-                calMsg.innerHTML = "Precisa de apoio para estruturar este formulário?";
+                text.innerHTML = `<strong>Análise Técnica:</strong> Processo de baixa complexidade lógica. O Forms resolverá a <strong>padronização da entrada de dados</strong>, eliminando o uso de e-mails desestruturados para coletas simples.`;
                 calArea.classList.remove('hidden');
-                sendData("Forms");
+            } 
+            else {
+                title.innerText = "Gestão Operacional Local";
+                text.innerHTML = `<strong>Análise Técnica:</strong> O volume ou risco atual não justifica o custo de implementação em plataforma. Recomenda-se manter o controle via <strong>e-mail ou planilhas compartilhadas</strong> até que o processo ganhe maturidade ou escala.`;
             }
         }
     </script>
