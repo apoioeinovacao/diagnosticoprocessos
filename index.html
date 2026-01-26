@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Soluções Organizacionais</title>
+    <title>Diagnóstico de Processos - Oficial</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #002D54; color: #333; }
         .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 600px; width: 90%; text-align: center; }
         .hidden { display: none; }
         h2 { color: #002D54; margin-bottom: 20px; font-weight: bold; }
         p { line-height: 1.6; font-size: 1.1em; color: #444; }
+        input { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
         .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
         button { padding: 15px 30px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn-next { background: #002D54; color: white; width: 100%; }
@@ -17,7 +18,6 @@
         .btn-nao { background: #A93226; color: white; flex: 1; }
         #result-text { text-align: left; background: #f8f9fa; padding: 25px; border-left: 6px solid #002D54; margin-top: 20px; border-radius: 4px; }
         .progress { font-size: 0.9em; color: #888; margin-bottom: 10px; font-weight: bold; }
-        .block-title { color: #002D54; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
     </style>
 </head>
 <body>
@@ -25,12 +25,12 @@
     <div class="card">
         <div id="step-name">
             <h2>Diagnóstico de Processos</h2>
-            <p>Responda às 12 perguntas para identificarmos a solução ideal.</p>
+            <p>Avaliação técnica para recomendação de ferramentas.</p>
+            <input type="text" id="userName" placeholder="Informe seu nome completo">
             <button class="btn-next" onclick="startFlow()">Iniciar Diagnóstico</button>
         </div>
 
         <div id="step-questions" class="hidden">
-            <span id="block-label" class="block-title"></span>
             <div id="progress" class="progress"></div>
             <h3 id="question-text" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">...</h3>
             <div class="btn-group">
@@ -42,30 +42,42 @@
         <div id="step-result" class="hidden">
             <h2 id="result-title"></h2>
             <div id="result-text"></div>
-            <button class="btn-next" style="margin-top:20px;" onclick="location.reload()">Refazer</button>
+            
+            <div id="calendar-area" class="hidden">
+                <p style="margin-top: 20px; font-weight: bold;">Deseja agendar um horário para detalharmos este fluxo?</p>
+                <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
+                    <button class="btn-next">Agendar reunião com Alexandre</button>
+                </a>
+            </div>
+            
+            <p id="sending-status" style="font-size: 12px; color: #999; margin-top: 15px; font-style: italic;"></p>
+            <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Refazer</button>
         </div>
     </div>
 
     <script>
+        let userName = "";
         let currentQuestion = 0;
         let answers = [];
 
         const questions = [
-            { t: "Bloco 1 — Existe fluxo?", q: "Após a solicitação inicial, existem etapas claras e sequenciais até a conclusão?" },
-            { t: "Bloco 1 — Existe fluxo?", q: "Na maioria dos casos, essas etapas ocorrem sempre na mesma ordem?" },
-            { t: "Bloco 1 — Existe fluxo?", q: "Pessoas diferentes executam esse trabalho seguindo o mesmo padrão?" },
-            { t: "Bloco 2 — Papel do sistema", q: "O sistema precisa validar regras ou impedir o avanço do pedido se faltar algo?" },
-            { t: "Bloco 2 — Papel do sistema", q: "O sistema deve notificar automaticamente o próximo responsável por cada tarefa?" },
-            { t: "Bloco 2 — Papel do sistema", q: "É importante medir o tempo de cada etapa individual, e não apenas o prazo total?" },
-            { t: "Bloco 3 — Atendimento ou fluxo", q: "A demanda entra em uma fila comum para que alguém da equipe assuma o atendimento?" },
-            { t: "Bloco 3 — Atendimento ou fluxo", q: "O controle principal é identificar com qual atendente o pedido está no momento?" },
-            { t: "Bloco 3 — Atendimento ou fluxo", q: "O sucesso depende mais de cumprir o prazo de resposta (SLA) do que de seguir etapas rígidas?" },
-            { t: "Maturidade", q: "As regras atuais são claras o suficiente para não gerar dúvidas frequentes na execução?" },
-            { t: "Maturidade", q: "As exceções ou casos atípicos representam menos da metade dos atendimentos?" },
-            { t: "Maturidade", q: "Hoje, a maior dificuldade não é entender como o processo deveria funcionar na teoria?" }
+            /* 1 */ "Após a solicitação inicial, existem etapas claras e sequenciais até a conclusão?",
+            /* 2 */ "Na maioria dos casos, essas etapas ocorrem sempre na mesma ordem?",
+            /* 3 */ "Pessoas diferentes executam esse trabalho seguindo o mesmo padrão?",
+            /* 4 */ "O sistema precisa validar regras ou impedir o avanço do pedido se faltar algo?",
+            /* 5 */ "O sistema deve notificar automaticamente o próximo responsável por cada tarefa?",
+            /* 6 */ "É importante medir o tempo de cada etapa individual, e não apenas o prazo total?",
+            /* 7 */ "A demanda entra em uma fila comum para que alguém da equipe assuma o atendimento?",
+            /* 8 */ "O controle principal é identificar com qual atendente o pedido está no momento?",
+            /* 9 */ "O sucesso depende mais de cumprir o prazo de resposta (SLA) do que de seguir etapas rígidas?",
+            /* 10 */ "As regras atuais são claras o suficiente para não gerar dúvidas frequentes na execução?",
+            /* 11 */ "As exceções ou casos atípicos representam menos da metade dos atendimentos?",
+            /* 12 */ "Hoje, a maior dificuldade não é entender como o processo deveria funcionar na teoria?"
         ];
 
         function startFlow() {
+            userName = document.getElementById('userName').value;
+            if (!userName.trim()) { alert("Por favor, informe seu nome."); return; }
             document.getElementById('step-name').classList.add('hidden');
             document.getElementById('step-questions').classList.remove('hidden');
             updateQuestion();
@@ -73,9 +85,8 @@
 
         function updateQuestion() {
             if (currentQuestion < questions.length) {
-                document.getElementById('block-label').innerText = questions[currentQuestion].t;
                 document.getElementById('progress').innerText = `Pergunta ${currentQuestion + 1} de 12`;
-                document.getElementById('question-text').innerText = questions[currentQuestion].q;
+                document.getElementById('question-text').innerText = questions[currentQuestion];
             } else { showResult(); }
         }
 
@@ -85,39 +96,82 @@
             updateQuestion();
         }
 
+        async function sendData(res) {
+            const formspreeUrl = "https://formspree.io/f/xlgjerob";
+            let payload = { Solicitante: userName, Recomendacao: res };
+            questions.forEach((q, i) => {
+                payload[`P${i + 1}`] = `${answers[i] ? 'Sim' : 'Não'}`;
+            });
+
+            try {
+                await fetch(formspreeUrl, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                document.getElementById('sending-status').innerText = "Relatório enviado com sucesso.";
+            } catch (e) { }
+        }
+
         function showResult() {
             document.getElementById('step-questions').classList.add('hidden');
             document.getElementById('step-result').classList.remove('hidden');
             const title = document.getElementById('result-title');
             const text = document.getElementById('result-text');
+            const calendar = document.getElementById('calendar-area');
 
-            // Agrupamento de respostas por bloco
-            const b1 = answers.slice(0, 3).filter(a => a).length; // Fluxo
-            const b2 = answers.slice(3, 6).filter(a => a).length; // Papel Sistema (Zeev)
-            const b3 = answers.slice(6, 9).filter(a => a).length; // Atendimento (Movidesk)
-            const b4 = answers.slice(9, 12).filter(a => a).length; // Maturidade
+            // Mapeamento de índices (Questão 1 é index 0)
+            const q = (num) => answers[num-1];
+            
+            // Contagem de SIM por blocos (predominância)
+            const sim4_6 = [q(4), q(5), q(6)].filter(a => a).length;
+            const sim7_9 = [q(7), q(8), q(9)].filter(a => a).length;
+            const sim10_12 = [q(10), q(11), q(12)].filter(a => a).length;
 
-            // Lógica do gabarito atualizado
-            if (b4 <= 1) {
+            let finalRes = "";
+
+            // --- Lógica Punitiva Contra "Sim Viciado" ---
+
+            // 1. Redesenhar antes de automatizar
+            if (q(7) === false || q(12) === false) {
+                finalRes = "Redesenhar";
                 title.innerText = "Redesenhar antes de automatizar";
-                text.innerHTML = "O processo apresenta baixa maturidade. É necessário definir as regras e o funcionamento teórico antes de aplicar qualquer tecnologia.";
-            } 
-            else if (b1 <= 1) {
+                text.innerHTML = "O diagnóstico indica que o fluxo teórico ou a entrada de demandas ainda não estão claros o suficiente para qualquer automação.";
+            }
+            // 2. Melhorar processo
+            else if (q(7) === true && (q(10) === false || q(11) === false)) {
+                finalRes = "Melhorar";
                 title.innerText = "Melhorar processo";
-                text.innerHTML = "Embora existam regras, o fluxo sequencial ainda não está consolidado ou padronizado o suficiente para automação.";
+                text.innerHTML = "Existe um fluxo, porém ele ainda é instável ou gera muitas discussões. É necessário padronizar as regras antes de escolher uma ferramenta.";
             }
-            else if (b2 >= 2 && b4 >= 2) {
+            // 3. Zeev BPM (Regra de Exceção Qualificada)
+            else if (q(1) === false && q(2) === false && q(3) === false && sim4_6 <= 1 && sim7_9 === 3 && sim10_12 >= 2) {
+                finalRes = "Zeev BPM";
                 title.innerText = "Zeev BPM";
-                text.innerHTML = "Solução indicada para controle de fluxo, orquestração de tarefas entre responsáveis e validação de regras automáticas.";
+                text.innerHTML = "Solução recomendada para orquestração de fluxo complexo, garantindo que as regras de negócio sejam cumpridas rigorosamente.";
+                calendar.classList.remove('hidden');
             }
-            else if (b3 >= 2) {
+            // 4. Movidesk / Service Desk
+            else if (sim4_6 >= 2 && (q(8) === false || q(9) === false)) {
+                finalRes = "Movidesk / Service Desk";
                 title.innerText = "Movidesk / Service Desk";
-                text.innerHTML = "Solução indicada para gestão de atendimentos, controle de filas e monitoramento de prazos (SLA).";
+                text.innerHTML = "Foco em gestão de atendimento. Ideal para equipes que atendem fila de pedidos e precisam controlar prazos (SLA).";
+                calendar.classList.remove('hidden');
             }
+            // 5. Forms (Padrão para centralização)
+            else if (q(1) === true && (q(2) === true || q(3) === true) && sim7_9 === 0) {
+                finalRes = "Forms";
+                title.innerText = "Microsoft Forms";
+                text.innerHTML = "Indicado para centralizar a entrada de pedidos em um único lugar, sem necessidade de fluxos ou regras complexas.";
+            }
+            // Fallback para evitar erros
             else {
-                title.innerText = "Forms";
-                text.innerHTML = "Indicado para centralizar o recebimento de informações em um único local, sem necessidade de fluxos ou regras complexas de sistema.";
+                finalRes = "Melhorar Processo";
+                title.innerText = "Melhorar Processo";
+                text.innerHTML = "As respostas indicam contradições entre a necessidade de controle e a maturidade atual. Recomendamos revisar o desenho do fluxo.";
             }
+
+            sendData(finalRes);
         }
     </script>
 </body>
