@@ -25,12 +25,12 @@
             width: 90%; 
             text-align: center; 
         }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         h2 { color: var(--azul-netuno); margin-bottom: 20px; }
         p { line-height: 1.6; color: #555; }
         .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .question-text { min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; }
-        input, textarea { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        input, textarea { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
         .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 25px; }
         button { padding: 15px 30px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn-next { background: var(--azul-netuno); color: white; width: 100%; }
@@ -61,13 +61,13 @@
         <div id="block-name" class="block-tag"></div>
         <div id="question-text" class="question-text"></div>
         
-        <div id="area-sim-nao" class="btn-group">
+        <div id="area-sim-nao" class="btn-group hidden">
             <button class="btn-sim" onclick="handleAnswer(true)">SIM</button>
             <button class="btn-nao" onclick="handleAnswer(false)">NÃO</button>
         </div>
 
         <div id="area-discursiva" class="hidden">
-            <textarea id="open-answer" rows="4" placeholder="Sua resposta aqui..."></textarea>
+            <textarea id="open-answer" rows="4" placeholder="Escreva sua resposta aqui..."></textarea>
             <button class="btn-next" onclick="handleOpenAnswer()">Continuar</button>
         </div>
     </div>
@@ -93,12 +93,11 @@
 <script>
     let solicitante = "";
     let currentIdx = 0;
-    let logicalAnswers = []; // Armazena apenas os booleanos para a lógica
-    let openAnswersData = {}; // Armazena as respostas discursivas
+    let logicalAnswers = []; 
+    let openAnswersData = {}; 
 
-    // Mistura de tipos: 'logic' (sim/não) e 'open' (discursiva)
     const flow = [
-        { type: "open", b: "INFO INICIAL", q: "Qual seria o nome deste processo?", key: "Nome_do_Processo" },
+        { type: "open", b: "DADOS DO PROCESSO", q: "Qual seria o nome deste processo?", key: "Nome_do_Processo" },
         { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
         { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
         { type: "logic", b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q3. A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
@@ -135,7 +134,7 @@
             } else {
                 document.getElementById('area-sim-nao').classList.add('hidden');
                 document.getElementById('area-discursiva').classList.remove('hidden');
-                document.getElementById('open-answer').value = "";
+                document.getElementById('open-answer').value = ""; // Limpa o campo para a próxima
             }
         } else {
             showResult();
@@ -150,7 +149,10 @@
 
     function handleOpenAnswer() {
         const val = document.getElementById('open-answer').value;
-        if (!val.trim()) { alert("Por favor, responda à pergunta antes de continuar."); return; }
+        if (!val.trim()) { 
+            alert("Este campo é obrigatório. Por favor, descreva sua resposta."); 
+            return; 
+        }
         openAnswersData[flow[currentIdx].key] = val;
         currentIdx++;
         updateScreen();
@@ -167,7 +169,7 @@
         const q = (num) => logicalAnswers[num-1];
         let res = "";
 
-        // --- LÓGICA DE DECISÃO ORIGINAL (Mantida intacta) ---
+        // --- LÓGICA DE DECISÃO ORIGINAL ---
         if (q(1) === false || q(2) === false) {
             res = "Manual / E-mail";
             text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação. Recomenda-se manter a gestão via e-mail ou controles manuais.";
@@ -204,8 +206,6 @@
 
     async function sendToFormspree(resultLabel) {
         const url = "https://formspree.io/f/xlgjerob";
-        
-        // Coleta dados discursivos e lógicos para o e-mail
         let data = { 
             Solicitante: solicitante, 
             Resultado_Final: resultLabel,
