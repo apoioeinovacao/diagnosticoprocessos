@@ -134,7 +134,7 @@
             } else {
                 document.getElementById('area-sim-nao').classList.add('hidden');
                 document.getElementById('area-discursiva').classList.remove('hidden');
-                document.getElementById('open-answer').value = ""; // Limpa o campo para a próxima
+                document.getElementById('open-answer').value = "";
             }
         } else {
             showResult();
@@ -149,10 +149,7 @@
 
     function handleOpenAnswer() {
         const val = document.getElementById('open-answer').value;
-        if (!val.trim()) { 
-            alert("Este campo é obrigatório. Por favor, descreva sua resposta."); 
-            return; 
-        }
+        if (!val.trim()) { alert("Por favor, responda à pergunta."); return; }
         openAnswersData[flow[currentIdx].key] = val;
         currentIdx++;
         updateScreen();
@@ -169,34 +166,43 @@
         const q = (num) => logicalAnswers[num-1];
         let res = "";
 
+        // --- TRAVAS DE SEGURANÇA (Tudo SIM ou Tudo NÃO) ---
+        const allSim = logicalAnswers.every(ans => ans === true);
+        const allNao = logicalAnswers.every(ans => ans === false);
+
+        if (allSim || allNao) {
+            res = "Redesenhar Processo";
+            text.innerText = "Respostas muito uniformes detectadas. É necessária uma análise consultiva para desenhar o fluxo antes de qualquer automação.";
+            cal.classList.remove('hidden');
+        } 
         // --- LÓGICA DE DECISÃO ORIGINAL ---
-        if (q(1) === false || q(2) === false) {
+        else if (q(1) === false || q(2) === false) {
             res = "Manual / E-mail";
-            text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação. Recomenda-se manter a gestão via e-mail ou controles manuais.";
+            text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação.";
         } 
         else if ((q(3) === false && q(4) === false) || q(12) === false || ((q(8) || q(9)) && (q(3) === false || q(4) === false))) {
             res = "Redesenhar Processo";
-            text.innerText = "O fluxo atual está confuso ou inconsistente. Antes de automatizar, é necessário desenhar e padronizar as etapas do processo.";
+            text.innerText = "O fluxo atual está confuso ou inconsistente. Antes de automatizar, é necessário desenhar e padronizar as etapas.";
             cal.classList.remove('hidden');
         }
         else if (q(5) === true && q(6) === false && q(8) === false) {
             res = "Formulário (Forms)";
-            text.innerText = "A necessidade principal é centralizar a entrada de dados. Um formulário estruturado resolverá a organização das solicitações.";
+            text.innerText = "A necessidade principal é centralizar a entrada de dados.";
             cal.classList.remove('hidden');
         }
         else if (q(6) === true && q(7) === true && q(8) === false) {
             res = "Movidesk / Service Desk";
-            text.innerText = "Cenário focado em gestão de atendimento, filas e cumprimento de prazos (SLA).";
+            text.innerText = "Cenário focado em gestão de atendimento e prazos.";
             cal.classList.remove('hidden');
         }
         else if (q(3) && q(4) && q(8) && q(9) && q(10) && q(11) && q(12)) {
             res = "Zeev BPM";
-            text.innerText = "Processo maduro e orquestrado identificado. Ideal para automação de fluxos que exigem rastreabilidade e controle de etapas entre áreas.";
+            text.innerText = "Processo maduro e orquestrado identificado. Ideal para automação de fluxos via BPM.";
             cal.classList.remove('hidden');
         }
         else {
             res = "Redesenhar Processo";
-            text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica devido a inconsistências. Recomenda-se uma revisão do fluxo.";
+            text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica. Recomenda-se uma revisão do fluxo.";
             cal.classList.remove('hidden');
         }
 
@@ -206,26 +212,12 @@
 
     async function sendToFormspree(resultLabel) {
         const url = "https://formspree.io/f/xlgjerob";
-        let data = { 
-            Solicitante: solicitante, 
-            Resultado_Final: resultLabel,
-            ...openAnswersData 
-        };
-        
-        logicalAnswers.forEach((a, index) => {
-            data[`Logica_Q${index + 1}`] = a ? "SIM" : "NÃO";
-        });
-
+        let data = { Solicitante: solicitante, Resultado_Final: resultLabel, ...openAnswersData };
+        logicalAnswers.forEach((a, index) => { data[`Logica_Q${index + 1}`] = a ? "SIM" : "NÃO"; });
         try {
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(data)
-            });
+            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) });
             document.getElementById('sending-status').innerText = "Diagnóstico enviado com sucesso.";
-        } catch (e) {
-            document.getElementById('sending-status').innerText = "Erro ao enviar dados.";
-        }
+        } catch (e) { document.getElementById('sending-status').innerText = "Erro ao enviar dados."; }
     }
 </script>
 
