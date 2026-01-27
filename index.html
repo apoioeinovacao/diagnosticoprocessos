@@ -30,7 +30,7 @@
         p { line-height: 1.6; color: #555; }
         .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .question-text { min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; }
-        input { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        input, textarea { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 25px; }
         button { padding: 15px 30px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
         .btn-next { background: var(--azul-netuno); color: white; width: 100%; }
@@ -60,9 +60,15 @@
     <div id="step-questions" class="hidden">
         <div id="block-name" class="block-tag"></div>
         <div id="question-text" class="question-text"></div>
-        <div class="btn-group">
+        
+        <div id="area-sim-nao" class="btn-group">
             <button class="btn-sim" onclick="handleAnswer(true)">SIM</button>
             <button class="btn-nao" onclick="handleAnswer(false)">NÃO</button>
+        </div>
+
+        <div id="area-discursiva" class="hidden">
+            <textarea id="open-answer" rows="4" placeholder="Sua resposta aqui..."></textarea>
+            <button class="btn-next" onclick="handleOpenAnswer()">Continuar</button>
         </div>
     </div>
 
@@ -86,22 +92,27 @@
 
 <script>
     let solicitante = "";
-    let currentQuestion = 0;
-    let answers = [];
+    let currentIdx = 0;
+    let logicalAnswers = []; // Armazena apenas os booleanos para a lógica
+    let openAnswersData = {}; // Armazena as respostas discursivas
 
-    const questions = [
-        { b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
-        { b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
-        { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q3. A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
-        { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q4. Pessoas diferentes executam esse processo de forma parecida?" },
-        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q5. O principal problema hoje é receber solicitações por vários canais diferentes?" },
-        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q6. As solicitações entram em fila e alguém da equipe assume para atender?" },
-        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q7. O mais importante é acompanhar prazos e saber quem está atendendo cada solicitação?" },
-        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q8. Após a entrada, a solicitação precisa “passar o bastão” entre pessoas ou áreas até ser concluída?" },
-        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q9. Esse fluxo precisa ser orquestrado, com controle claro de início, meio e fim?" },
-        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q10. As tarefas desse fluxo são repetitivas e previsíveis na maior parte dos casos?" },
-        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q11. É necessário gerar indicadores, histórico e rastreabilidade do processo?" },
-        { b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Q12. Se este processo fosse executado hoje sem sistema, você conseguiria explicar todo o fluxo por onde ele começa, passa e termina?" }
+    // Mistura de tipos: 'logic' (sim/não) e 'open' (discursiva)
+    const flow = [
+        { type: "open", b: "INFO INICIAL", q: "Qual seria o nome deste processo?", key: "Nome_do_Processo" },
+        { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
+        { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
+        { type: "logic", b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q3. A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
+        { type: "logic", b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q4. Pessoas diferentes executam esse processo de forma parecida?" },
+        { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q5. O principal problema hoje é receber solicitações por vários canais diferentes?" },
+        { type: "open", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Conte um pouco da dor que esse processo carrega atualmente", key: "Dor_do_Processo" },
+        { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q6. As solicitações entram em fila e alguém da equipe assume para atender?" },
+        { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q7. O mais importante é acompanhar prazos e saber quem está atendendo cada solicitação?" },
+        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q8. Após a entrada, a solicitação precisa “passar o bastão” entre pessoas ou áreas até ser concluída?" },
+        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q9. Esse fluxo precisa ser orquestrado, com controle claro de início, meio e fim?" },
+        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q10. As tarefas desse fluxo são repetitivas e previsíveis na maior parte dos casos?" },
+        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q11. É necessário gerar indicadores, histórico e rastreabilidade do processo?" },
+        { type: "logic", b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Q12. Se este processo fosse executado hoje sem sistema, você conseguiria explicar todo o fluxo por onde ele começa, passa e termina?" },
+        { type: "open", b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Descreva um pouco sobre como é esse processo hoje", key: "Como_Funciona_Hoje" }
     ];
 
     function startFlow() {
@@ -109,22 +120,40 @@
         if (!solicitante.trim()) { alert("Informe seu nome."); return; }
         document.getElementById('step-start').classList.add('hidden');
         document.getElementById('step-questions').classList.remove('hidden');
-        updateQuestion();
+        updateScreen();
     }
 
-    function updateQuestion() {
-        if (currentQuestion < questions.length) {
-            document.getElementById('block-name').innerText = questions[currentQuestion].b;
-            document.getElementById('question-text').innerText = questions[currentQuestion].q;
+    function updateScreen() {
+        if (currentIdx < flow.length) {
+            const item = flow[currentIdx];
+            document.getElementById('block-name').innerText = item.b;
+            document.getElementById('question-text').innerText = item.q;
+            
+            if (item.type === "logic") {
+                document.getElementById('area-sim-nao').classList.remove('hidden');
+                document.getElementById('area-discursiva').classList.add('hidden');
+            } else {
+                document.getElementById('area-sim-nao').classList.add('hidden');
+                document.getElementById('area-discursiva').classList.remove('hidden');
+                document.getElementById('open-answer').value = "";
+            }
         } else {
             showResult();
         }
     }
 
     function handleAnswer(val) {
-        answers.push(val);
-        currentQuestion++;
-        updateQuestion();
+        logicalAnswers.push(val);
+        currentIdx++;
+        updateScreen();
+    }
+
+    function handleOpenAnswer() {
+        const val = document.getElementById('open-answer').value;
+        if (!val.trim()) { alert("Por favor, responda à pergunta antes de continuar."); return; }
+        openAnswersData[flow[currentIdx].key] = val;
+        currentIdx++;
+        updateScreen();
     }
 
     function showResult() {
@@ -135,41 +164,34 @@
         const text = document.getElementById('result-text');
         const cal = document.getElementById('calendar-area');
         
-        const q = (num) => answers[num-1];
+        const q = (num) => logicalAnswers[num-1];
         let res = "";
 
-        // --- LÓGICA DE DECISÃO ---
-
-        // 🟤 MANUAL / E-MAIL
+        // --- LÓGICA DE DECISÃO ORIGINAL (Mantida intacta) ---
         if (q(1) === false || q(2) === false) {
             res = "Manual / E-mail";
             text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação. Recomenda-se manter a gestão via e-mail ou controles manuais.";
         } 
-        // 🔴 REDESENHAR PROCESSO (Cenários de falha de maturidade ou lógica)
         else if ((q(3) === false && q(4) === false) || q(12) === false || ((q(8) || q(9)) && (q(3) === false || q(4) === false))) {
             res = "Redesenhar Processo";
             text.innerText = "O fluxo atual está confuso ou inconsistente. Antes de automatizar, é necessário desenhar e padronizar as etapas do processo.";
             cal.classList.remove('hidden');
         }
-        // 🔵 FORMULÁRIO (FORMS)
         else if (q(5) === true && q(6) === false && q(8) === false) {
             res = "Formulário (Forms)";
             text.innerText = "A necessidade principal é centralizar a entrada de dados. Um formulário estruturado resolverá a organização das solicitações.";
             cal.classList.remove('hidden');
         }
-        // 🟣 MOVIDESK / SERVICE DESK
         else if (q(6) === true && q(7) === true && q(8) === false) {
             res = "Movidesk / Service Desk";
             text.innerText = "Cenário focado em gestão de atendimento, filas e cumprimento de prazos (SLA).";
             cal.classList.remove('hidden');
         }
-        // 🟢 ZEEV BPM
         else if (q(3) && q(4) && q(8) && q(9) && q(10) && q(11) && q(12)) {
             res = "Zeev BPM";
             text.innerText = "Processo maduro e orquestrado identificado. Ideal para automação de fluxos que exigem rastreabilidade e controle de etapas entre áreas.";
             cal.classList.remove('hidden');
         }
-        // ⚠️ REGRA FINAL DE FECHAMENTO
         else {
             res = "Redesenhar Processo";
             text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica devido a inconsistências. Recomenda-se uma revisão do fluxo.";
@@ -182,10 +204,16 @@
 
     async function sendToFormspree(resultLabel) {
         const url = "https://formspree.io/f/xlgjerob";
-        let data = { Solicitante: solicitante, Resultado_Final: resultLabel };
         
-        questions.forEach((item, index) => {
-            data[`Questao_${index + 1}`] = answers[index] ? "SIM" : "NÃO";
+        // Coleta dados discursivos e lógicos para o e-mail
+        let data = { 
+            Solicitante: solicitante, 
+            Resultado_Final: resultLabel,
+            ...openAnswersData 
+        };
+        
+        logicalAnswers.forEach((a, index) => {
+            data[`Logica_Q${index + 1}`] = a ? "SIM" : "NÃO";
         });
 
         try {
