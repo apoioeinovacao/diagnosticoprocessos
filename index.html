@@ -97,6 +97,7 @@
     let openAnswersData = {}; 
 
     const flow = [
+        { type: "open", b: "DADOS DO PROCESSO", q: "Qual problema você quer solucionar?", key: "Problema_a_Solucionar" },
         { type: "open", b: "DADOS DO PROCESSO", q: "Qual seria o nome deste processo?", key: "Nome_do_Processo" },
         { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
         { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
@@ -166,7 +167,6 @@
         const q = (num) => logicalAnswers[num-1];
         let res = "";
 
-        // --- TRAVAS DE SEGURANÇA (Tudo SIM ou Tudo NÃO) ---
         const allSim = logicalAnswers.every(ans => ans === true);
         const allNao = logicalAnswers.every(ans => ans === false);
 
@@ -175,7 +175,6 @@
             text.innerText = "Respostas muito uniformes detectadas. É necessária uma análise consultiva para desenhar o fluxo antes de qualquer automação.";
             cal.classList.remove('hidden');
         } 
-        // --- LÓGICA DE DECISÃO ORIGINAL ---
         else if (q(1) === false || q(2) === false) {
             res = "Manual / E-mail";
             text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação.";
