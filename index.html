@@ -3,199 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico de Ferramentas e Processos</title>
+    <title>Árvore de Decisão - Processos</title>
     <style>
+        :root { --azul-netuno: #1B2631; }
         body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--azul-netuno); 
+            color: #333; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            background: #2C3E50; /* Azul Neutro */
-            color: #333; 
         }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 600px; width: 90%; text-align: center; }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            max-width: 600px; 
+            width: 90%; 
+            text-align: center; 
+        }
         .hidden { display: none; }
-        h2 { color: #2C3E50; margin-bottom: 20px; font-weight: bold; }
-        p { line-height: 1.6; font-size: 1.1em; color: #444; }
-        input { padding: 12px; width: 90%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
-        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        h2 { color: var(--azul-netuno); margin-bottom: 20px; }
+        p { line-height: 1.6; color: #555; }
+        .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .question-text { min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; }
+        input { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 25px; }
         button { padding: 15px 30px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-next { background: #2C3E50; color: white; width: 100%; }
+        .btn-next { background: var(--azul-netuno); color: white; width: 100%; }
         .btn-sim { background: #1D8348; color: white; flex: 1; }
         .btn-nao { background: #A93226; color: white; flex: 1; }
-        #result-text { text-align: left; background: #f8f9fa; padding: 25px; border-left: 6px solid #2C3E50; margin-top: 20px; border-radius: 4px; }
-        .progress { font-size: 0.9em; color: #888; margin-bottom: 10px; font-weight: bold; }
-        .block-tag { font-size: 0.75em; color: #2C3E50; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        #result-display { 
+            text-align: left; 
+            background: #f8f9fa; 
+            padding: 25px; 
+            border-left: 6px solid var(--azul-netuno); 
+            margin-top: 20px; 
+            border-radius: 4px; 
+        }
+        .status { font-size: 11px; color: #999; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div id="step-name">
-            <h2>Diagnóstico de Ferramentas</h2>
-            <p>Vamos descobrir a melhor ferramenta para sua necessidade. Responda as perguntas a seguir com SIM ou NÃO de acordo com sua necessidade.</p>
-            <input type="text" id="userName" placeholder="Informe seu nome completo">
-            <button class="btn-next" onclick="startFlow()">Começar</button>
-        </div>
+<div class="card">
+    <div id="step-start">
+        <h2>Árvore de Decisão - Processos</h2>
+        <p>Responda às perguntas para melhor entendermos a necessidade de automação do seu processo.</p>
+        <input type="text" id="userName" placeholder="Informe seu nome completo">
+        <button class="btn-next" onclick="startFlow()">Iniciar Diagnóstico</button>
+    </div>
 
-        <div id="step-questions" class="hidden">
-            <div id="block-name" class="block-tag"></div>
-            <div id="progress" class="progress"></div>
-            <h3 id="question-text" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">...</h3>
-            <div class="btn-group">
-                <button class="btn-sim" onclick="handleAnswer(true)">Sim</button>
-                <button class="btn-nao" onclick="handleAnswer(false)">Não</button>
-            </div>
-        </div>
-
-        <div id="step-result" class="hidden">
-            <h2 id="result-title"></h2>
-            <div id="result-text"></div>
-            
-            <div id="calendar-area" class="hidden">
-                <p style="margin-top: 25px; font-weight: bold;">Deseja detalhar este projeto?</p>
-                <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
-                    <button class="btn-next">Agendar reunião com Alexandre</button>
-                </a>
-            </div>
-            
-            <p id="sending-status" style="font-size: 11px; color: #999; margin-top: 20px;"></p>
-            <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Refazer Diagnóstico</button>
+    <div id="step-questions" class="hidden">
+        <div id="block-name" class="block-tag"></div>
+        <div id="question-text" class="question-text"></div>
+        <div class="btn-group">
+            <button class="btn-sim" onclick="handleAnswer(true)">SIM</button>
+            <button class="btn-nao" onclick="handleAnswer(false)">NÃO</button>
         </div>
     </div>
 
-    <script>
-        let solicitante = "";
-        let currentQuestion = 0;
-        let answers = [];
+    <div id="step-result" class="hidden">
+        <h2 id="result-title"></h2>
+        <div id="result-display">
+            <p id="result-text"></p>
+        </div>
+        
+        <div id="calendar-area" class="hidden">
+            <p style="margin-top: 25px; font-weight: bold;">Deseja detalhar este projeto?</p>
+            <a href="https://outlook.office.com/bookwithme/user/fec3fc9171ab43869839ccfbf768b3e9@goldpao.com/meetingtype/fvmFuyerekKxbcV2HkZ2lQ2?anonymous&ismsaljsauthenabled&ep=mlink" target="_blank">
+                <button class="btn-next">Agendar reunião com Alexandre</button>
+            </a>
+        </div>
+        
+        <p id="sending-status" class="status"></p>
+        <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Refazer Diagnóstico</button>
+    </div>
+</div>
 
-        const questions = [
-            { b: "🔴 BLOCO 1 — VALOR E IMPACTO", q: "O volume ou a criticidade das solicitações justifica o uso de um sistema dedicado?" },
-            { b: "🔴 BLOCO 1 — VALOR E IMPACTO", q: "Manter esse processo de forma manual hoje gera mais problema do que benefício?" },
-            { b: "🔴 BLOCO 1 — VALOR E IMPACTO", q: "Esse processo impacta clientes externos, auditorias ou áreas críticas da empresa?" },
-            { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
-            { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Pessoas diferentes executam esse trabalho de forma parecida?" },
-            { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "As solicitações entram em fila e alguém assume para tratar?" },
-            { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "É importante saber, a qualquer momento, quem está atendendo cada solicitação?" },
-            { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "O sucesso depende mais de cumprir prazos (SLA) do que de como as etapas são executadas?" },
-            { b: "🟢 BLOCO 4 — CONTROLE DO FLUXO", q: "O sistema precisa impedir o avanço se alguma regra não for cumprida?" },
-            { b: "🟢 BLOCO 4 — CONTROLE DO FLUXO", q: "O sistema precisa avisar automaticamente quando uma etapa termina?" },
-            { b: "🟢 BLOCO 4 — CONTROLE DO FLUXO", q: "Depois de recebida, a solicitação depende de uma sequência fixa de etapas?" },
-            { b: "🟢 BLOCO 4 — CONTROLE DO FLUXO", q: "Mesmo sem sistema, esse processo já funciona de forma previsível?" }
-        ];
+<script>
+    let solicitante = "";
+    let currentQuestion = 0;
+    let answers = [];
 
-        function startFlow() {
-            solicitante = document.getElementById('userName').value;
-            if (!solicitante.trim()) { alert("Informe seu nome."); return; }
-            document.getElementById('step-name').classList.add('hidden');
-            document.getElementById('step-questions').classList.remove('hidden');
-            updateQuestion();
+    const questions = [
+        { b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
+        { b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
+        { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q3. A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
+        { b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q4. Pessoas diferentes executam esse processo de forma parecida?" },
+        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q5. O principal problema hoje é receber solicitações por vários canais diferentes?" },
+        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q6. As solicitações entram em fila e alguém da equipe assume para atender?" },
+        { b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q7. O mais importante é acompanhar prazos e saber quem está atendendo cada solicitação?" },
+        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q8. Após a entrada, a solicitação precisa “passar o bastão” entre pessoas ou áreas até ser concluída?" },
+        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q9. Esse fluxo precisa ser orquestrado, com controle claro de início, meio e fim?" },
+        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q10. As tarefas desse fluxo são repetitivas e previsíveis na maior parte dos casos?" },
+        { b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q11. É necessário gerar indicadores, histórico e rastreabilidade do processo?" },
+        { b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Q12. Se este processo fosse executado hoje sem sistema, você conseguiria explicar todo o fluxo por onde ele começa, passa e termina?" }
+    ];
+
+    function startFlow() {
+        solicitante = document.getElementById('userName').value;
+        if (!solicitante.trim()) { alert("Informe seu nome."); return; }
+        document.getElementById('step-start').classList.add('hidden');
+        document.getElementById('step-questions').classList.remove('hidden');
+        updateQuestion();
+    }
+
+    function updateQuestion() {
+        if (currentQuestion < questions.length) {
+            document.getElementById('block-name').innerText = questions[currentQuestion].b;
+            document.getElementById('question-text').innerText = questions[currentQuestion].q;
+        } else {
+            showResult();
+        }
+    }
+
+    function handleAnswer(val) {
+        answers.push(val);
+        currentQuestion++;
+        updateQuestion();
+    }
+
+    function showResult() {
+        document.getElementById('step-questions').classList.add('hidden');
+        document.getElementById('step-result').classList.remove('hidden');
+        
+        const title = document.getElementById('result-title');
+        const text = document.getElementById('result-text');
+        const cal = document.getElementById('calendar-area');
+        
+        const q = (num) => answers[num-1];
+        let res = "";
+
+        // --- LÓGICA DE DECISÃO ---
+
+        // 🟤 MANUAL / E-MAIL
+        if (q(1) === false || q(2) === false) {
+            res = "Manual / E-mail";
+            text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação. Recomenda-se manter a gestão via e-mail ou controles manuais.";
+        } 
+        // 🔴 REDESENHAR PROCESSO (Cenários de falha de maturidade ou lógica)
+        else if ((q(3) === false && q(4) === false) || q(12) === false || ((q(8) || q(9)) && (q(3) === false || q(4) === false))) {
+            res = "Redesenhar Processo";
+            text.innerText = "O fluxo atual está confuso ou inconsistente. Antes de automatizar, é necessário desenhar e padronizar as etapas do processo.";
+            cal.classList.remove('hidden');
+        }
+        // 🔵 FORMULÁRIO (FORMS)
+        else if (q(5) === true && q(6) === false && q(8) === false) {
+            res = "Formulário (Forms)";
+            text.innerText = "A necessidade principal é centralizar a entrada de dados. Um formulário estruturado resolverá a organização das solicitações.";
+            cal.classList.remove('hidden');
+        }
+        // 🟣 MOVIDESK / SERVICE DESK
+        else if (q(6) === true && q(7) === true && q(8) === false) {
+            res = "Movidesk / Service Desk";
+            text.innerText = "Cenário focado em gestão de atendimento, filas e cumprimento de prazos (SLA).";
+            cal.classList.remove('hidden');
+        }
+        // 🟢 ZEEV BPM
+        else if (q(3) && q(4) && q(8) && q(9) && q(10) && q(11) && q(12)) {
+            res = "Zeev BPM";
+            text.innerText = "Processo maduro e orquestrado identificado. Ideal para automação de fluxos que exigem rastreabilidade e controle de etapas entre áreas.";
+            cal.classList.remove('hidden');
+        }
+        // ⚠️ REGRA FINAL DE FECHAMENTO
+        else {
+            res = "Redesenhar Processo";
+            text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica devido a inconsistências. Recomenda-se uma revisão do fluxo.";
+            cal.classList.remove('hidden');
         }
 
-        function updateQuestion() {
-            if (currentQuestion < questions.length) {
-                document.getElementById('block-name').innerText = questions[currentQuestion].b;
-                document.getElementById('progress').innerText = `Questão ${currentQuestion + 1} de 12`;
-                document.getElementById('question-text').innerText = questions[currentQuestion].q;
-            } else { showResult(); }
-        }
+        title.innerText = res;
+        sendToFormspree(res);
+    }
 
-        function handleAnswer(val) {
-            answers.push(val);
-            currentQuestion++;
-            updateQuestion();
-        }
+    async function sendToFormspree(resultLabel) {
+        const url = "https://formspree.io/f/xlgjerob";
+        let data = { Solicitante: solicitante, Resultado_Final: resultLabel };
+        
+        questions.forEach((item, index) => {
+            data[`Questao_${index + 1}`] = answers[index] ? "SIM" : "NÃO";
+        });
 
-        async function sendToFormspree(resultLabel) {
-            const url = "https://formspree.io/f/xlgjerob";
-            let data = { Solicitante: solicitante, Resultado: resultLabel };
-            questions.forEach((item, index) => {
-                data[`Q${index + 1}_${item.q.substring(0, 30)}...`] = answers[index] ? "SIM" : "NÃO";
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
             });
-
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                document.getElementById('sending-status').innerText = "Diagnóstico enviado com sucesso.";
-            } catch (e) { }
+            document.getElementById('sending-status').innerText = "Diagnóstico enviado com sucesso.";
+        } catch (e) {
+            document.getElementById('sending-status').innerText = "Erro ao enviar dados.";
         }
+    }
+</script>
 
-        function showResult() {
-            document.getElementById('step-questions').classList.add('hidden');
-            document.getElementById('step-result').classList.remove('hidden');
-            
-            const title = document.getElementById('result-title');
-            const text = document.getElementById('result-text');
-            const cal = document.getElementById('calendar-area');
-
-            const q = (num) => answers[num-1];
-            let res = "";
-
-            // --- LÓGICA FINAL ---
-
-            // 🟤 MANUAL / E-MAIL (Prioritário)
-            if (q(1) === false && q(2) === false && q(3) === false) {
-                res = "Manual / E-mail";
-                title.innerText = res;
-                text.innerHTML = "De acordo com as respostas, não justifica nenhum tipo de automação para o processo ou tarefa.";
-            }
-            // ⚠️ AVALIAÇÃO CONSULTIVA (Inconsistência antes dos demais)
-            else if (( (q(9) || q(10)) && q(11) === false ) || ( q(8) && q(11) === false && q(6) === false )) {
-                res = "Avaliação Consultiva";
-                title.innerText = res;
-                text.innerHTML = "As respostas indicam uma inconsistência lógica ou cenário híbrido (mistura de rigidez com variabilidade). É necessária uma análise humana para definir o caminho.";
-                cal.classList.remove('hidden');
-            }
-            // 🟢 ZEEV BPM (Exceção Qualificada)
-            else if (q(1) && q(2) && q(3) && q(4) && q(5) && q(11) && q(12) && (q(9) || q(10))) {
-                res = "Zeev BPM";
-                title.innerText = res;
-                text.innerHTML = "Identificada necessidade de fluxo fixo, controlado e maduro. O processo justifica o uso de orquestração via BPM.";
-                cal.classList.remove('hidden');
-            }
-            // 🔴 REDESENHAR
-            else if (q(4) === false && q(5) === false) {
-                res = "Redesenhar antes de automatizar";
-                title.innerText = res;
-                text.innerHTML = "O fluxo de trabalho ainda é inexistente ou totalmente inconsistente. É necessário desenhar o processo antes de pensar em sistema.";
-                cal.classList.remove('hidden');
-            }
-            // 🟠 MELHORAR PROCESSO
-            else if (q(4) === true && q(5) === false) {
-                res = "Melhorar processo";
-                title.innerText = res;
-                text.innerHTML = "O fluxo existe, mas a execução é inconsistente entre os envolvidos. Recomenda-se padronizar a operação.";
-                cal.classList.remove('hidden');
-            }
-            // 🟣 MOVIDESK / SERVICE DESK
-            else if (q(6) && q(7) && q(11) === false) {
-                res = "Movidesk / Service Desk";
-                title.innerText = res;
-                text.innerHTML = "Cenário ideal para gestão de atendimento e prazos. O foco é gerenciar a fila e o status das solicitações.";
-                cal.classList.remove('hidden');
-            }
-            // 🔵 FORMS
-            else if (q(1) && q(4) === false && q(6) === false && q(11) === false) {
-                res = "Forms";
-                title.innerText = "Microsoft Forms";
-                text.innerHTML = "A centralização da entrada é suficiente. O processo exige tratamento individualizado e não possui fluxo fixo.";
-                cal.classList.remove('hidden');
-            }
-            // FALLBACK
-            else {
-                res = "Avaliação Consultiva";
-                title.innerText = res;
-                text.innerHTML = "Cenário com particularidades específicas detectado. Agende uma conversa para definirmos a arquitetura ideal.";
-                cal.classList.remove('hidden');
-            }
-
-            sendToFormspree(res);
-        }
-    </script>
 </body>
 </html>
