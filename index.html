@@ -97,27 +97,26 @@
     let openAnswersData = {}; 
 
     const flow = [
-        { type: "open", b: "DADOS DO PROCESSO", q: "Qual problema você quer solucionar?", key: "Problema_a_Solucionar" },
         { type: "open", b: "DADOS DO PROCESSO", q: "Qual seria o nome deste processo?", key: "Nome_do_Processo" },
         { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q1. Este processo acontece com frequência ou tem impacto relevante (risco, custo, cliente ou compliance)?" },
-        { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Manter este processo de forma manual hoje gera mais problema do que benefício?" },
+        { type: "logic", b: "🔴 BLOCO 1 — VALOR E NECESSIDADE", q: "Q2. Na última vez que este processo foi executado, ele seguiu o fluxo esperado, sem precisar de ajustes, desvios ou tratativas paralelas?" },
         { type: "logic", b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q3. A maioria das solicitações segue as mesmas etapas, na mesma ordem?" },
         { type: "logic", b: "🟠 BLOCO 2 — MATURIDADE DO PROCESSO", q: "Q4. Pessoas diferentes executam esse processo de forma parecida?" },
         { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q5. O principal problema hoje é receber solicitações por vários canais diferentes?" },
-        { type: "open", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Conte um pouco da dor que esse processo carrega atualmente", key: "Dor_do_Processo" },
         { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q6. As solicitações entram em fila e alguém da equipe assume para atender?" },
         { type: "logic", b: "🟡 BLOCO 3 — NATUREZA DA DEMANDA", q: "Q7. O mais importante é acompanhar prazos e saber quem está atendendo cada solicitação?" },
-        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q8. Após a entrada, a solicitação precisa “passar o bastão” entre pessoas ou áreas até ser concluída?" },
+        { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q8. Durante o processo, a solicitação passa por mais de uma pessoa ou área antes de ser concluída?" },
         { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q9. Esse fluxo precisa ser orquestrado, com controle claro de início, meio e fim?" },
         { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q10. As tarefas desse fluxo são repetitivas e previsíveis na maior parte dos casos?" },
         { type: "logic", b: "🟢 BLOCO 4 — FLUXO E ORQUESTRAÇÃO", q: "Q11. É necessário gerar indicadores, histórico e rastreabilidade do processo?" },
         { type: "logic", b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Q12. Se este processo fosse executado hoje sem sistema, você conseguiria explicar todo o fluxo por onde ele começa, passa e termina?" },
-        { type: "open", b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Descreva um pouco sobre como é esse processo hoje", key: "Como_Funciona_Hoje" }
+        { type: "open", b: "DADOS DO PROCESSO", q: "Descreva como esse processo funciona hoje, quais são as dores ou dificuldades enfrentadas e o que você espera resolver ou melhorar.", key: "Dor_do_Processo" },
+        { type: "open", b: "⚠️ BLOCO 5 — AUTOCONSCIÊNCIA", q: "Conte como esse processo acontece hoje, desde o início até o fim, da forma que você conhece. Se alguma etapa não estiver clara ou ainda não existir, descreva também.", key: "Como_Funciona_Hoje" }
     ];
 
     function startFlow() {
         solicitante = document.getElementById('userName').value;
-        if (!solicitante.trim()) { alert("Informe seu nome."); return; }
+        if (!solicitante.trim()) { alert("Informe seu nome completo."); return; }
         document.getElementById('step-start').classList.add('hidden');
         document.getElementById('step-questions').classList.remove('hidden');
         updateScreen();
@@ -170,38 +169,45 @@
         const allSim = logicalAnswers.every(ans => ans === true);
         const allNao = logicalAnswers.every(ans => ans === false);
 
+        // 1. RESPOSTAS UNIFORMES
         if (allSim || allNao) {
             res = "Redesenhar Processo";
             text.innerText = "Respostas muito uniformes detectadas. É necessária uma análise consultiva para desenhar o fluxo antes de qualquer automação.";
             cal.classList.remove('hidden');
         } 
-        else if (q(1) === false || q(2) === false) {
+        // 2. MANUAL / E-MAIL (Calibrado: Sem impacto E sem problemas no fluxo atual)
+        else if (q(1) === false && q(2) === true) {
             res = "Manual / E-mail";
-            text.innerText = "De acordo com as respostas, o volume ou impacto atual não justifica o investimento em automação.";
+            text.innerText = "De acordo com as respostas, o processo não possui impacto crítico e o fluxo atual é executado sem grandes desvios. O investimento em automação não é recomendado no momento.";
         } 
-        else if ((q(3) === false && q(4) === false) || q(12) === false || ((q(8) || q(9)) && (q(3) === false || q(4) === false))) {
+        // 3. REDESENHAR (Falhas de padronização, falta de autoconsciência ou desvios em processos sem impacto)
+        else if ( (q(2) === false && (q(3) === false || q(4) === false)) || q(12) === false || ((q(8) || q(9)) && (q(3) === false || q(4) === false)) || (q(1) === false && q(2) === false) ) {
             res = "Redesenhar Processo";
-            text.innerText = "O fluxo atual está confuso ou inconsistente. Antes de automatizar, é necessário desenhar e padronizar as etapas.";
+            text.innerText = "O fluxo atual apresenta inconsistências ou falta de padronização. Antes de automatizar, é necessário redesenhar e estabilizar as etapas.";
             cal.classList.remove('hidden');
         }
+        // 4. FORMS
         else if (q(5) === true && q(6) === false && q(8) === false) {
             res = "Formulário (Forms)";
             text.innerText = "A necessidade principal é centralizar a entrada de dados.";
             cal.classList.remove('hidden');
         }
+        // 5. MOVIDESK
         else if (q(6) === true && q(7) === true && q(8) === false) {
             res = "Movidesk / Service Desk";
             text.innerText = "Cenário focado em gestão de atendimento e prazos.";
             cal.classList.remove('hidden');
         }
+        // 6. ZEEV
         else if (q(3) && q(4) && q(8) && q(9) && q(10) && q(11) && q(12)) {
             res = "Zeev BPM";
             text.innerText = "Processo maduro e orquestrado identificado. Ideal para automação de fluxos via BPM.";
             cal.classList.remove('hidden');
         }
+        // 7. PADRÃO / OUTROS
         else {
             res = "Redesenhar Processo";
-            text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica. Recomenda-se uma revisão do fluxo.";
+            text.innerText = "Não foi possível encaixar o processo em uma ferramenta específica. Recomenda-se uma revisão estratégica do fluxo.";
             cal.classList.remove('hidden');
         }
 
