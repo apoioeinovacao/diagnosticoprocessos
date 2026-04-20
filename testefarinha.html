@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Industrial de Farinha</title>
+    <style>
+        :root { --azul-netuno: #1B2631; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--azul-netuno); 
+            color: #333; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            max-width: 600px; 
+            width: 90%; 
+            text-align: center; 
+        }
+        .hidden { display: none !important; }
+        h2 { color: var(--azul-netuno); margin-bottom: 20px; }
+        p { line-height: 1.6; color: #555; }
+        .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .question-text { min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; margin-bottom: 20px;}
+        input { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
+        .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        button { padding: 15px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-next { background: var(--azul-netuno); color: white; width: 100%; }
+        
+        .dynamic-btn { background: #f1f2f6; color: #333; border: 2px solid #ddd; flex: 1; min-width: 60px; }
+        .dynamic-btn:hover { background: var(--azul-netuno); color: white; border-color: var(--azul-netuno); }
+        
+        #result-display { 
+            text-align: left; 
+            background: #f8f9fa; 
+            padding: 25px; 
+            border-left: 6px solid var(--azul-netuno); 
+            margin-top: 20px; 
+            border-radius: 4px; 
+        }
+        .status { font-size: 14px; color: #1D8348; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="step-start">
+        <h2>Teste Industrial de Farinha</h2>
+        <p>Preencha os dados de avaliação do lote.</p>
+        <input type="text" id="userName" placeholder="Nome do Avaliador">
+        <button class="btn-next" onclick="startFlow()">Iniciar Teste</button>
+    </div>
+
+    <div id="step-questions" class="hidden">
+        <div id="block-name" class="block-tag"></div>
+        <div id="question-text" class="question-text"></div>
+        
+        <div id="input-area">
+            </div>
+    </div>
+
+    <div id="step-result" class="hidden">
+        <h2>Formulário Concluído</h2>
+        <div id="result-display">
+            <p>Todos os dados do teste foram registrados. A estrutura de envio já está conectada.</p>
+        </div>
+        <p id="sending-status" class="status">Enviando dados...</p>
+        <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Registrar Novo Teste</button>
+    </div>
+</div>
+
+<script>
+    let avaliador = "";
+    let currentIdx = 0;
+    let answersData = {}; 
+
+    // Estrutura linear sem lógica condicional
+    const flow = [
+        { type: "text", b: "DADOS DA FARINHA", q: "Fornecedor:", key: "Fornecedor" },
+        { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
+        { type: "choice", b: "DADOS DA FARINHA", q: "Condição:", options: ["Teste Farinha Pura", "Teste Farinha na Mescla"], key: "Condicao_Teste" },
+        { type: "date", b: "DADOS DA FARINHA", q: "Data do teste:", key: "Data_Teste" },
+        
+        { type: "text", b: "BATIMENTO", q: "Rápido:", key: "Batimento_Rapido" },
+        { type: "text", b: "BATIMENTO", q: "Lenta:", key: "Batimento_Lenta" },
+        
+        { type: "text", b: "HIDRATAÇÃO", q: "Água (L):", key: "Agua_L" },
+        { type: "text", b: "HIDRATAÇÃO", q: "Gelo (kg):", key: "Gelo_Kg" },
+        { type: "text", b: "HIDRATAÇÃO", q: "Temperatura da água (°C):", key: "Temp_Agua" },
+        { type: "text", b: "HIDRATAÇÃO", q: "Temperatura da Sala (°C):", key: "Temp_Sala" },
+        
+        { type: "text", b: "PROCESSO", q: "Temperatura Massa na masseira (°C):", key: "Temp_Massa_Masseira" },
+        { type: "choice", b: "PROCESSO", q: "Número de Voltas cilindro:", options: ["7 a 10", "8 a 10", "9 a 11", "10 a 12", "10 a 14"], key: "Voltas_Cilindro" },
+        { type: "text", b: "PROCESSO", q: "Velocidade G.A. (pães/hora):", key: "Velocidade_GA" },
+        { type: "text", b: "PROCESSO", q: "Temperatura do Pão na entrada túnel congelamento (°C):", key: "Temp_Pao_Tunel" },
+        
+        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Absorção:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Absorcao" },
+        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Tempo de desenvolvimento:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Tempo_Desenv" },
+        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Homogeneidade da massa:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Homogeneidade" },
+        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Pegajosidade:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Pegajosidade" },
+        
+        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Resistência no cilindro (força ao passar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Resistencia" },
+        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Retração (massa “volta” após cilindrar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Retracao" },
+        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Superfície após laminação:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Superficie" },
+        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Estabilidade da massa no manuseio:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Estabilidade" },
+        
+        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Elasticidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Elasticidade" },
+        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Extensibilidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Extensibilidade" },
+        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" }
+    ];
+
+    function startFlow() {
+        avaliador = document.getElementById('userName').value;
+        if (!avaliador.trim()) { alert("Informe o nome do avaliador."); return; }
+        
+        answersData['Avaliador'] = avaliador;
+        
+        document.getElementById('step-start').classList.add('hidden');
+        document.getElementById('step-questions').classList.remove('hidden');
+        updateScreen();
+    }
+
+    function updateScreen() {
+        if (currentIdx < flow.length) {
+            const item = flow[currentIdx];
+            document.getElementById('block-name').innerText = item.b;
+            document.getElementById('question-text').innerText = item.q;
+            
+            const inputArea = document.getElementById('input-area');
+            inputArea.innerHTML = ''; // Limpa a área
+            
+            if(item.type === 'choice') {
+                // Cria botões dinâmicos para múltipla escolha
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'btn-group';
+                
+                item.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'dynamic-btn';
+                    btn.innerText = opt;
+                    btn.onclick = () => saveAndNext(item.key, opt);
+                    btnContainer.appendChild(btn);
+                });
+                inputArea.appendChild(btnContainer);
+                
+            } else {
+                // Cria campo de input (texto ou data) e botão Continuar
+                const input = document.createElement('input');
+                input.type = item.type === 'date' ? 'date' : 'text';
+                input.placeholder = "Sua resposta...";
+                
+                const btnNext = document.createElement('button');
+                btnNext.className = 'btn-next';
+                btnNext.innerText = 'Continuar';
+                btnNext.onclick = () => {
+                    if(!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
+                    saveAndNext(item.key, input.value);
+                };
+                
+                inputArea.appendChild(input);
+                inputArea.appendChild(btnNext);
+                
+                // Dar foco automático no input
+                setTimeout(() => input.focus(), 100);
+            }
+        } else {
+            showResult();
+        }
+    }
+
+    function saveAndNext(key, value) {
+        answersData[key] = value;
+        currentIdx++;
+        updateScreen();
+    }
+
+    function showResult() {
+        document.getElementById('step-questions').classList.add('hidden');
+        document.getElementById('step-result').classList.remove('hidden');
+        
+        // Mantive sua integração existente com o Formspree
+        sendToFormspree();
+    }
+
+    async function sendToFormspree() {
+        const url = "https://formspree.io/f/xlgjerob"; // Mantido o seu endpoint original
+        
+        try {
+            await fetch(url, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
+                body: JSON.stringify(answersData) 
+            });
+            document.getElementById('sending-status').innerText = "Dados enviados com sucesso para a base.";
+        } catch (e) { 
+            document.getElementById('sending-status').innerText = "Erro ao enviar dados. Verifique a conexão."; 
+            document.getElementById('sending-status').style.color = "#A93226";
+        }
+    }
+</script>
+
+</body>
+</html>
