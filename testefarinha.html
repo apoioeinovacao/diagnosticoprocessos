@@ -72,7 +72,7 @@
         <div id="result-display">
             <p>Todos os dados do teste foram registrados. A estrutura de envio já está conectada.</p>
         </div>
-        <p id="sending-status" class="status">Enviando dados...</p>
+        <p id="sending-status" class="status">Enviando dados para a planilha...</p>
         <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Registrar Novo Teste</button>
     </div>
 </div>
@@ -135,10 +135,9 @@
             document.getElementById('question-text').innerText = item.q;
             
             const inputArea = document.getElementById('input-area');
-            inputArea.innerHTML = ''; // Limpa a área
+            inputArea.innerHTML = ''; 
             
             if(item.type === 'choice') {
-                // Cria botões dinâmicos para múltipla escolha
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'btn-group';
                 
@@ -152,7 +151,6 @@
                 inputArea.appendChild(btnContainer);
                 
             } else {
-                // Cria campo de input (texto ou data) e botão Continuar
                 const input = document.createElement('input');
                 input.type = item.type === 'date' ? 'date' : 'text';
                 input.placeholder = "Sua resposta...";
@@ -168,7 +166,6 @@
                 inputArea.appendChild(input);
                 inputArea.appendChild(btnNext);
                 
-                // Dar foco automático no input
                 setTimeout(() => input.focus(), 100);
             }
         } else {
@@ -186,20 +183,24 @@
         document.getElementById('step-questions').classList.add('hidden');
         document.getElementById('step-result').classList.remove('hidden');
         
-        // Mantive sua integração existente com o Formspree
-        sendToFormspree();
+        sendToPowerAutomate();
     }
 
-    async function sendToFormspree() {
-        const url = "https://formspree.io/f/xlgjerob"; // Mantido o seu endpoint original
+    async function sendToPowerAutomate() {
+        const url = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/41d110640b554df7958a1b65ea791fdb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=l7OgVRlNYDTphaWechzAKylxjVfWDJDVRBG2W6RU-lM"; 
         
         try {
-            await fetch(url, { 
+            const response = await fetch(url, { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
+                headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(answersData) 
             });
-            document.getElementById('sending-status').innerText = "Dados enviados com sucesso para a base.";
+
+            if (response.ok) {
+                document.getElementById('sending-status').innerText = "Dados registrados com sucesso na planilha!";
+            } else {
+                throw new Error("Erro no servidor da Microsoft.");
+            }
         } catch (e) { 
             document.getElementById('sending-status').innerText = "Erro ao enviar dados. Verifique a conexão."; 
             document.getElementById('sending-status').style.color = "#A93226";
