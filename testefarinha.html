@@ -82,50 +82,41 @@
     let currentIdx = 0;
     let answersData = {}; 
 
-    // Estrutura linear com o campo de Foto adicionado
     const flow = [
         { type: "text", b: "DADOS DA FARINHA", q: "Fornecedor:", key: "Fornecedor" },
         { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
         { type: "choice", b: "DADOS DA FARINHA", q: "Condição:", options: ["Teste Farinha Pura", "Teste Farinha na Mescla"], key: "Condicao_Teste" },
         { type: "date", b: "DADOS DA FARINHA", q: "Data do teste:", key: "Data_Teste" },
-        
         { type: "text", b: "BATIMENTO", q: "Rápido:", key: "Batimento_Rapido" },
         { type: "text", b: "BATIMENTO", q: "Lenta:", key: "Batimento_Lenta" },
-        
         { type: "text", b: "HIDRATAÇÃO", q: "Água (L):", key: "Agua_L" },
         { type: "text", b: "HIDRATAÇÃO", q: "Gelo (kg):", key: "Gelo_Kg" },
         { type: "text", b: "HIDRATAÇÃO", q: "Temperatura da água (°C):", key: "Temp_Agua" },
         { type: "text", b: "HIDRATAÇÃO", q: "Temperatura da Sala (°C):", key: "Temp_Sala" },
-        
         { type: "text", b: "PROCESSO", q: "Temperatura Massa na masseira (°C):", key: "Temp_Massa_Masseira" },
         { type: "choice", b: "PROCESSO", q: "Número de Voltas cilindro:", options: ["7 a 10", "8 a 10", "9 a 11", "10 a 12", "10 a 14"], key: "Voltas_Cilindro" },
         { type: "text", b: "PROCESSO", q: "Velocidade G.A. (pães/hora):", key: "Velocidade_GA" },
         { type: "text", b: "PROCESSO", q: "Temperatura do Pão na entrada túnel congelamento (°C):", key: "Temp_Pao_Tunel" },
-        
         { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Absorção:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Absorcao" },
         { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Tempo de desenvolvimento:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Tempo_Desenv" },
         { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Homogeneidade da massa:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Homogeneidade" },
         { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Pegajosidade:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Pegajosidade" },
-        
         { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Resistência no cilindro (força ao passar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Resistencia" },
         { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Retração (massa “volta” após cilindrar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Retracao" },
         { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Superfície após laminação:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Superficie" },
         { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Estabilidade da massa no manuseio:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Estabilidade" },
-        
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Elasticidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Elasticidade" },
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Extensibilidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Extensibilidade" },
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" },
 
-        // PASSO DE IMAGEM
-        { type: "file", b: "EVIDÊNCIAS", q: "Anexe uma foto do teste (Opcional):", key_name: "Foto_Nome", key_base64: "Foto_Base64" }
+        // PASSO DE IMAGEM OBRIGATÓRIO
+        { type: "file", b: "EVIDÊNCIAS", q: "Anexe uma foto do teste (Obrigatório):", key_name: "Foto_Nome", key_base64: "Foto_Base64" }
     ];
 
     function startFlow() {
         avaliador = document.getElementById('userName').value;
         if (!avaliador.trim()) { alert("Informe o nome do avaliador."); return; }
-        
         answersData['Avaliador'] = avaliador;
-        
         document.getElementById('step-start').classList.add('hidden');
         document.getElementById('step-questions').classList.remove('hidden');
         updateScreen();
@@ -136,14 +127,12 @@
             const item = flow[currentIdx];
             document.getElementById('block-name').innerText = item.b;
             document.getElementById('question-text').innerText = item.q;
-            
             const inputArea = document.getElementById('input-area');
             inputArea.innerHTML = ''; 
             
             if(item.type === 'choice') {
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'btn-group';
-                
                 item.options.forEach(opt => {
                     const btn = document.createElement('button');
                     btn.className = 'dynamic-btn';
@@ -166,7 +155,6 @@
                     if (fileInput.files && fileInput.files.length > 0) {
                         const file = fileInput.files[0];
                         const reader = new FileReader();
-                        
                         reader.onload = function(e) {
                             answersData[item.key_name] = file.name;
                             answersData[item.key_base64] = e.target.result;
@@ -175,13 +163,9 @@
                         };
                         reader.readAsDataURL(file);
                     } else {
-                        answersData[item.key_name] = "";
-                        answersData[item.key_base64] = "";
-                        currentIdx++;
-                        updateScreen();
+                        alert("A foto é obrigatória para concluir o teste.");
                     }
                 };
-                
                 inputArea.appendChild(fileInput);
                 inputArea.appendChild(btnNext);
 
@@ -189,7 +173,6 @@
                 const input = document.createElement('input');
                 input.type = item.type === 'date' ? 'date' : 'text';
                 input.placeholder = "Sua resposta...";
-                
                 const btnNext = document.createElement('button');
                 btnNext.className = 'btn-next';
                 btnNext.innerText = 'Continuar';
@@ -197,10 +180,8 @@
                     if(!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
                     saveAndNext(item.key, input.value);
                 };
-                
                 inputArea.appendChild(input);
                 inputArea.appendChild(btnNext);
-                
                 setTimeout(() => input.focus(), 100);
             }
         } else {
@@ -217,20 +198,17 @@
     function showResult() {
         document.getElementById('step-questions').classList.add('hidden');
         document.getElementById('step-result').classList.remove('hidden');
-        
         sendToPowerAutomate();
     }
 
     async function sendToPowerAutomate() {
         const url = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/41d110640b554df7958a1b65ea791fdb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=l7OgVRlNYDTphaWechzAKylxjVfWDJDVRBG2W6RU-lM"; 
-        
         try {
             const response = await fetch(url, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(answersData) 
             });
-
             if (response.ok) {
                 document.getElementById('sending-status').innerText = "Dados registrados com sucesso na planilha!";
             } else {
