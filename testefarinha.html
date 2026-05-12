@@ -82,7 +82,7 @@
     let currentIdx = 0;
     let answersData = {}; 
 
-    // Estrutura linear sem lógica condicional
+    // Estrutura linear com o campo de Foto adicionado
     const flow = [
         { type: "text", b: "DADOS DA FARINHA", q: "Fornecedor:", key: "Fornecedor" },
         { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
@@ -114,7 +114,10 @@
         
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Elasticidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Elasticidade" },
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Extensibilidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Extensibilidade" },
-        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" }
+        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" },
+
+        // PASSO DE IMAGEM
+        { type: "file", b: "EVIDÊNCIAS", q: "Anexe uma foto do teste (Opcional):", key_name: "Foto_Nome", key_base64: "Foto_Base64" }
     ];
 
     function startFlow() {
@@ -150,6 +153,38 @@
                 });
                 inputArea.appendChild(btnContainer);
                 
+            } else if (item.type === 'file') {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*'; 
+                fileInput.style.padding = '10px';
+                
+                const btnNext = document.createElement('button');
+                btnNext.className = 'btn-next';
+                btnNext.innerText = 'Continuar';
+                btnNext.onclick = () => {
+                    if (fileInput.files && fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            answersData[item.key_name] = file.name;
+                            answersData[item.key_base64] = e.target.result;
+                            currentIdx++;
+                            updateScreen();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        answersData[item.key_name] = "";
+                        answersData[item.key_base64] = "";
+                        currentIdx++;
+                        updateScreen();
+                    }
+                };
+                
+                inputArea.appendChild(fileInput);
+                inputArea.appendChild(btnNext);
+
             } else {
                 const input = document.createElement('input');
                 input.type = item.type === 'date' ? 'date' : 'text';
