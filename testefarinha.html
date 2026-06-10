@@ -46,7 +46,6 @@
             border-radius: 4px; 
         }
         .status { font-size: 14px; color: #1D8348; margin-top: 20px; font-weight: bold; }
-        .code-display { font-size: 1.2em; font-weight: bold; color: var(--azul-secundario); background: #e8eaed; padding: 10px; border-radius: 6px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -63,8 +62,7 @@
 
     <div id="step-novo" class="hidden">
         <h2>Novo Teste de Farinha</h2>
-        <p>Preencha o nome para iniciar a avaliação. O código será gerado automaticamente.</p>
-        <div id="new-code-display" class="code-display"></div>
+        <p>Preencha o nome do avaliador para iniciar. O código do teste será gerado automaticamente após o envio.</p>
         <input type="text" id="userName" placeholder="Nome do Avaliador">
         <button class="btn-primary" onclick="startNovo()">Iniciar Teste</button>
         <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
@@ -72,14 +70,13 @@
 
     <div id="step-anexar" class="hidden">
         <h2>Anexar Evidência</h2>
-        <p>Informe o código do teste para vincular a imagem.</p>
+        <p>Informe o código do teste para vincular a imagem. Consulte o código na planilha.</p>
         <input type="text" id="searchCode" placeholder="Ex: TF020261">
         <button class="btn-primary" onclick="startAnexar()">Buscar e Anexar</button>
         <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
     </div>
 
     <div id="step-questions" class="hidden">
-        <div id="current-code-tag" class="code-display" style="font-size: 0.9em; margin-bottom: 15px;"></div>
         <div id="block-name" class="block-tag"></div>
         <div id="question-text" class="question-text"></div>
         <div id="input-area"></div>
@@ -100,7 +97,6 @@
     let answersData = {}; 
     let activeFlow = [];
 
-    // Base de perguntas original (sem a foto, que será injetada conforme a rota)
     const baseQuestions = [
         { type: "text", b: "DADOS DA FARINHA", q: "Fornecedor:", key: "Fornecedor" },
         { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
@@ -115,64 +111,29 @@
         { type: "text", b: "PROCESSO", q: "Temperatura Massa na masseira (°C):", key: "Temp_Massa_Masseira" },
         { type: "choice", b: "PROCESSO", q: "Número de Voltas cilindro:", options: ["7 a 10", "8 a 10", "9 a 11", "10 a 12", "10 a 14"], key: "Voltas_Cilindro" },
         { type: "text", b: "PROCESSO", q: "Velocidade G.A. (pães/hora):", key: "Velocidade_GA" },
-        { type: "text", b: "PROCESSO", q: "Temperatura do Pão na entrada túnel congelamento (°C):", key: "Temp_Pao_Tunel" },
-        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Absorção:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Absorcao" },
-        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Tempo de desenvolvimento:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Tempo_Desenv" },
-        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Homogeneidade da massa:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Homogeneidade" },
-        { type: "choice", b: "MASSEIRA - AVALIAÇÃO DO PERFIL", q: "Pegajosidade:", options: ["1", "2", "3", "4", "5"], key: "Masseira_Pegajosidade" },
-        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Resistência no cilindro (força ao passar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Resistencia" },
-        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Retração (massa “volta” após cilindrar):", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Retracao" },
-        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Superfície após laminação:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Superficie" },
-        { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Estabilidade da massa no manuseio:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Estabilidade" },
-        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Elasticidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Elasticidade" },
-        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Extensibilidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Extensibilidade" },
-        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" }
+        { type: "text", b: "PROCESSO", q: "Temperatura do Pão na entrada túnel congelamento (°C):", key: "Temp_Pao_Tunel" }
     ];
 
-    // Gerenciamento de Telas
     function showStep(stepId) {
         document.getElementById('step-action').classList.add('hidden');
         document.getElementById('step-novo').classList.add('hidden');
         document.getElementById('step-anexar').classList.add('hidden');
         document.getElementById('step-questions').classList.add('hidden');
         document.getElementById('step-result').classList.add('hidden');
-        
         document.getElementById(stepId).classList.remove('hidden');
-
-        if(stepId === 'step-novo') {
-            document.getElementById('new-code-display').innerText = "Próximo Código: " + previewNextCode();
-        }
     }
 
-    // Lógica do Código Incremental
-    function previewNextCode() {
-        let count = localStorage.getItem('testCounter') || 1;
-        return "TF02026" + count;
-    }
-
-    function generateCodeAndIncrement() {
-        let count = localStorage.getItem('testCounter') || 1;
-        let code = "TF02026" + count;
-        localStorage.setItem('testCounter', parseInt(count) + 1);
-        return code;
-    }
-
-    // Rota 1: Novo Teste
+    // Rota 1: Novo Teste — sem geração de código, o Power Automate gera
     function startNovo() {
         const avaliador = document.getElementById('userName').value;
         if (!avaliador.trim()) { alert("Informe o nome do avaliador."); return; }
-        
-        const novoCodigo = generateCodeAndIncrement();
-        
+
         answersData = {
             Acao: "Novo",
-            CodigoTeste: novoCodigo,
             Avaliador: avaliador
         };
 
-        activeFlow = [...baseQuestions]; // Carrega apenas as perguntas, sem foto
-        document.getElementById('current-code-tag').innerText = "Teste Ativo: " + novoCodigo;
-        
+        activeFlow = [...baseQuestions];
         showStep('step-questions');
         updateScreen();
     }
@@ -187,26 +148,23 @@
             CodigoTeste: searchCode
         };
 
-        // Define o fluxo contendo apenas a etapa de upload de arquivo
         activeFlow = [
             { type: "file", b: "EVIDÊNCIAS", q: `Anexe a foto referente ao teste ${searchCode}:`, key_name: "Foto_Nome", key_base64: "Foto_Base64" }
         ];
-        document.getElementById('current-code-tag').innerText = "Vinculando ao Teste: " + searchCode;
 
         showStep('step-questions');
         updateScreen();
     }
 
-    // Motor de Renderização de Perguntas
     function updateScreen() {
         if (currentIdx < activeFlow.length) {
             const item = activeFlow[currentIdx];
             document.getElementById('block-name').innerText = item.b;
             document.getElementById('question-text').innerText = item.q;
             const inputArea = document.getElementById('input-area');
-            inputArea.innerHTML = ''; 
-            
-            if(item.type === 'choice') {
+            inputArea.innerHTML = '';
+
+            if (item.type === 'choice') {
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'btn-group';
                 item.options.forEach(opt => {
@@ -217,13 +175,13 @@
                     btnContainer.appendChild(btn);
                 });
                 inputArea.appendChild(btnContainer);
-                
+
             } else if (item.type === 'file') {
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
-                fileInput.accept = 'image/*'; 
+                fileInput.accept = 'image/*';
                 fileInput.style.padding = '10px';
-                
+
                 const btnNext = document.createElement('button');
                 btnNext.className = 'btn-primary';
                 btnNext.innerText = 'Enviar Foto';
@@ -253,7 +211,7 @@
                 btnNext.className = 'btn-primary';
                 btnNext.innerText = 'Continuar';
                 btnNext.onclick = () => {
-                    if(!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
+                    if (!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
                     saveAndNext(item.key, input.value);
                 };
                 inputArea.appendChild(input);
@@ -277,20 +235,20 @@
     }
 
     async function sendToPowerAutomate() {
-        const url = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/984c77f71b244f7eb5972f2129c68853/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=wTR9Jx8ifcsWJLpGZUJHzvGWXpxJZUb8PKwAEUpWCNc"; 
+        const url = "COLE_AQUI_A_URL_DO_POWER_AUTOMATE";
         try {
-            const response = await fetch(url, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(answersData) 
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(answersData)
             });
             if (response.ok) {
                 document.getElementById('sending-status').innerText = "Transação processada com sucesso!";
             } else {
                 throw new Error("Erro no endpoint.");
             }
-        } catch (e) { 
-            document.getElementById('sending-status').innerText = "Falha na comunicação com o servidor."; 
+        } catch (e) {
+            document.getElementById('sending-status').innerText = "Falha na comunicação com o servidor.";
             document.getElementById('sending-status').style.color = "#A93226";
         }
     }
