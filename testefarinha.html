@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teste Industrial de Farinha</title>
     <style>
-        :root { --azul-netuno: #1B2631; }
+        :root { --azul-netuno: #1B2631; --azul-secundario: #2E4053; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: var(--azul-netuno); 
@@ -27,17 +27,16 @@
         }
         .hidden { display: none !important; }
         h2 { color: var(--azul-netuno); margin-bottom: 20px; }
-        p { line-height: 1.6; color: #555; }
+        p { line-height: 1.6; color: #555; margin-bottom: 20px; }
         .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .question-text { min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; margin-bottom: 20px;}
+        .question-text { min-height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; margin-bottom: 20px;}
         input { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
         .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
         button { padding: 15px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-next { background: var(--azul-netuno); color: white; width: 100%; }
-        
+        .btn-primary { background: var(--azul-netuno); color: white; width: 100%; }
+        .btn-secondary { background: var(--azul-secundario); color: white; width: 100%; }
         .dynamic-btn { background: #f1f2f6; color: #333; border: 2px solid #ddd; flex: 1; min-width: 60px; }
         .dynamic-btn:hover { background: var(--azul-netuno); color: white; border-color: var(--azul-netuno); }
-        
         #result-display { 
             text-align: left; 
             background: #f8f9fa; 
@@ -47,42 +46,62 @@
             border-radius: 4px; 
         }
         .status { font-size: 14px; color: #1D8348; margin-top: 20px; font-weight: bold; }
+        .code-display { font-size: 1.2em; font-weight: bold; color: var(--azul-secundario); background: #e8eaed; padding: 10px; border-radius: 6px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div id="step-start">
-        <h2>Teste Industrial de Farinha</h2>
-        <p>Preencha os dados de avaliação do lote.</p>
+    <div id="step-action">
+        <h2>Painel de Testes</h2>
+        <p>Selecione a operação desejada:</p>
+        <div class="btn-group" style="flex-direction: column;">
+            <button class="btn-primary" onclick="showStep('step-novo')">Novo Teste</button>
+            <button class="btn-secondary" onclick="showStep('step-anexar')">Anexar Evidência/Foto</button>
+        </div>
+    </div>
+
+    <div id="step-novo" class="hidden">
+        <h2>Novo Teste de Farinha</h2>
+        <p>Preencha o nome para iniciar a avaliação. O código será gerado automaticamente.</p>
+        <div id="new-code-display" class="code-display"></div>
         <input type="text" id="userName" placeholder="Nome do Avaliador">
-        <button class="btn-next" onclick="startFlow()">Iniciar Teste</button>
+        <button class="btn-primary" onclick="startNovo()">Iniciar Teste</button>
+        <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
+    </div>
+
+    <div id="step-anexar" class="hidden">
+        <h2>Anexar Evidência</h2>
+        <p>Informe o código do teste para vincular a imagem.</p>
+        <input type="text" id="searchCode" placeholder="Ex: TF020261">
+        <button class="btn-primary" onclick="startAnexar()">Buscar e Anexar</button>
+        <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
     </div>
 
     <div id="step-questions" class="hidden">
+        <div id="current-code-tag" class="code-display" style="font-size: 0.9em; margin-bottom: 15px;"></div>
         <div id="block-name" class="block-tag"></div>
         <div id="question-text" class="question-text"></div>
-        
-        <div id="input-area">
-            </div>
+        <div id="input-area"></div>
     </div>
 
     <div id="step-result" class="hidden">
-        <h2>Formulário Concluído</h2>
+        <h2>Operação Concluída</h2>
         <div id="result-display">
-            <p>Todos os dados do teste foram registrados. A estrutura de envio já está conectada.</p>
+            <p>Os dados foram estruturados e enviados para o servidor.</p>
         </div>
-        <p id="sending-status" class="status">Enviando dados para a planilha...</p>
-        <button class="btn-next" style="margin-top:20px; background: #666;" onclick="location.reload()">Registrar Novo Teste</button>
+        <p id="sending-status" class="status">Sincronizando com o Power Automate...</p>
+        <button class="btn-primary" style="margin-top:20px; background: #666;" onclick="location.reload()">Voltar ao Início</button>
     </div>
 </div>
 
 <script>
-    let avaliador = "";
     let currentIdx = 0;
     let answersData = {}; 
+    let activeFlow = [];
 
-    const flow = [
+    // Base de perguntas original (sem a foto, que será injetada conforme a rota)
+    const baseQuestions = [
         { type: "text", b: "DADOS DA FARINHA", q: "Fornecedor:", key: "Fornecedor" },
         { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
         { type: "choice", b: "DADOS DA FARINHA", q: "Condição:", options: ["Teste Farinha Pura", "Teste Farinha na Mescla"], key: "Condicao_Teste" },
@@ -107,24 +126,81 @@
         { type: "choice", b: "CILINDRO - AVALIAÇÃO DO PERFIL", q: "Estabilidade da massa no manuseio:", options: ["1", "2", "3", "4", "5"], key: "Cilindro_Estabilidade" },
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Elasticidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Elasticidade" },
         { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Extensibilidade:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Extensibilidade" },
-        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" },
-
-        // PASSO DE IMAGEM OBRIGATÓRIO
-        { type: "file", b: "EVIDÊNCIAS", q: "Anexe uma foto do teste (Obrigatório):", key_name: "Foto_Nome", key_base64: "Foto_Base64" }
+        { type: "choice", b: "MODELADORA - AVALIAÇÃO DO PERFIL", q: "Ponto de véu:", options: ["1", "2", "3", "4", "5"], key: "Modeladora_Ponto_Veu" }
     ];
 
-    function startFlow() {
-        avaliador = document.getElementById('userName').value;
+    // Gerenciamento de Telas
+    function showStep(stepId) {
+        document.getElementById('step-action').classList.add('hidden');
+        document.getElementById('step-novo').classList.add('hidden');
+        document.getElementById('step-anexar').classList.add('hidden');
+        document.getElementById('step-questions').classList.add('hidden');
+        document.getElementById('step-result').classList.add('hidden');
+        
+        document.getElementById(stepId).classList.remove('hidden');
+
+        if(stepId === 'step-novo') {
+            document.getElementById('new-code-display').innerText = "Próximo Código: " + previewNextCode();
+        }
+    }
+
+    // Lógica do Código Incremental
+    function previewNextCode() {
+        let count = localStorage.getItem('testCounter') || 1;
+        return "TF02026" + count;
+    }
+
+    function generateCodeAndIncrement() {
+        let count = localStorage.getItem('testCounter') || 1;
+        let code = "TF02026" + count;
+        localStorage.setItem('testCounter', parseInt(count) + 1);
+        return code;
+    }
+
+    // Rota 1: Novo Teste
+    function startNovo() {
+        const avaliador = document.getElementById('userName').value;
         if (!avaliador.trim()) { alert("Informe o nome do avaliador."); return; }
-        answersData['Avaliador'] = avaliador;
-        document.getElementById('step-start').classList.add('hidden');
-        document.getElementById('step-questions').classList.remove('hidden');
+        
+        const novoCodigo = generateCodeAndIncrement();
+        
+        answersData = {
+            Acao: "Novo",
+            CodigoTeste: novoCodigo,
+            Avaliador: avaliador
+        };
+
+        activeFlow = [...baseQuestions]; // Carrega apenas as perguntas, sem foto
+        document.getElementById('current-code-tag').innerText = "Teste Ativo: " + novoCodigo;
+        
+        showStep('step-questions');
         updateScreen();
     }
 
+    // Rota 2: Anexar Foto
+    function startAnexar() {
+        const searchCode = document.getElementById('searchCode').value.trim().toUpperCase();
+        if (!searchCode) { alert("Informe o código do teste."); return; }
+
+        answersData = {
+            Acao: "Anexar",
+            CodigoTeste: searchCode
+        };
+
+        // Define o fluxo contendo apenas a etapa de upload de arquivo
+        activeFlow = [
+            { type: "file", b: "EVIDÊNCIAS", q: `Anexe a foto referente ao teste ${searchCode}:`, key_name: "Foto_Nome", key_base64: "Foto_Base64" }
+        ];
+        document.getElementById('current-code-tag').innerText = "Vinculando ao Teste: " + searchCode;
+
+        showStep('step-questions');
+        updateScreen();
+    }
+
+    // Motor de Renderização de Perguntas
     function updateScreen() {
-        if (currentIdx < flow.length) {
-            const item = flow[currentIdx];
+        if (currentIdx < activeFlow.length) {
+            const item = activeFlow[currentIdx];
             document.getElementById('block-name').innerText = item.b;
             document.getElementById('question-text').innerText = item.q;
             const inputArea = document.getElementById('input-area');
@@ -149,8 +225,8 @@
                 fileInput.style.padding = '10px';
                 
                 const btnNext = document.createElement('button');
-                btnNext.className = 'btn-next';
-                btnNext.innerText = 'Continuar';
+                btnNext.className = 'btn-primary';
+                btnNext.innerText = 'Enviar Foto';
                 btnNext.onclick = () => {
                     if (fileInput.files && fileInput.files.length > 0) {
                         const file = fileInput.files[0];
@@ -163,7 +239,7 @@
                         };
                         reader.readAsDataURL(file);
                     } else {
-                        alert("A foto é obrigatória para concluir o teste.");
+                        alert("Selecione um arquivo para prosseguir.");
                     }
                 };
                 inputArea.appendChild(fileInput);
@@ -174,7 +250,7 @@
                 input.type = item.type === 'date' ? 'date' : 'text';
                 input.placeholder = "Sua resposta...";
                 const btnNext = document.createElement('button');
-                btnNext.className = 'btn-next';
+                btnNext.className = 'btn-primary';
                 btnNext.innerText = 'Continuar';
                 btnNext.onclick = () => {
                     if(!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
@@ -196,13 +272,12 @@
     }
 
     function showResult() {
-        document.getElementById('step-questions').classList.add('hidden');
-        document.getElementById('step-result').classList.remove('hidden');
+        showStep('step-result');
         sendToPowerAutomate();
     }
 
     async function sendToPowerAutomate() {
-        const url = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/41d110640b554df7958a1b65ea791fdb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=l7OgVRlNYDTphaWechzAKylxjVfWDJDVRBG2W6RU-lM"; 
+        const url = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/984c77f71b244f7eb5972f2129c68853/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=wTR9Jx8ifcsWJLpGZUJHzvGWXpxJZUb8PKwAEUpWCNc"; 
         try {
             const response = await fetch(url, { 
                 method: 'POST', 
@@ -210,12 +285,12 @@
                 body: JSON.stringify(answersData) 
             });
             if (response.ok) {
-                document.getElementById('sending-status').innerText = "Dados registrados com sucesso na planilha!";
+                document.getElementById('sending-status').innerText = "Transação processada com sucesso!";
             } else {
-                throw new Error("Erro no servidor da Microsoft.");
+                throw new Error("Erro no endpoint.");
             }
         } catch (e) { 
-            document.getElementById('sending-status').innerText = "Erro ao enviar dados. Verifique a conexão."; 
+            document.getElementById('sending-status').innerText = "Falha na comunicação com o servidor."; 
             document.getElementById('sending-status').style.color = "#A93226";
         }
     }
