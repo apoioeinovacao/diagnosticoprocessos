@@ -102,8 +102,8 @@
         { type: "text", b: "DADOS DA FARINHA", q: "Lote:", key: "Lote" },
         { type: "choice", b: "DADOS DA FARINHA", q: "Condição:", options: ["Teste Farinha Pura", "Teste Farinha na Mescla"], key: "Condicao_Teste" },
         { type: "date", b: "DADOS DA FARINHA", q: "Data do teste:", key: "Data_Teste" },
-        { type: "text", b: "BATIMENTO", q: "Lenta:", key: "Batimento_Lenta" },
-        { type: "text", b: "BATIMENTO", q: "Rápido:", key: "Batimento_Rapido" },
+        { type: "tempo", b: "BATIMENTO", q: "Lenta (mm:ss — ex: 04:30):", key: "Batimento_Lenta" },
+        { type: "tempo", b: "BATIMENTO", q: "Rápido (mm:ss — ex: 09:30):", key: "Batimento_Rapido" },
         { type: "text", b: "HIDRATAÇÃO", q: "Água (L):", key: "Agua_L" },
         { type: "text", b: "HIDRATAÇÃO", q: "Gelo (kg):", key: "Gelo_Kg" },
         { type: "text", b: "HIDRATAÇÃO", q: "Temperatura da água (°C):", key: "Temp_Agua" },
@@ -202,6 +202,40 @@
                 };
                 inputArea.appendChild(fileInput);
                 inputArea.appendChild(btnNext);
+
+            } else if (item.type === 'tempo') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'mm:ss (ex: 09:30)';
+                input.inputMode = 'numeric';
+                input.maxLength = 5;
+
+                // Formata sozinho enquanto digita: 0930 vira 09:30
+                input.oninput = () => {
+                    let v = input.value.replace(/\D/g, '').slice(0, 4);
+                    if (v.length > 2) v = v.slice(0, 2) + ':' + v.slice(2);
+                    input.value = v;
+                };
+
+                const btnNext = document.createElement('button');
+                btnNext.className = 'btn-primary';
+                btnNext.innerText = 'Continuar';
+                btnNext.onclick = () => {
+                    const v = input.value.trim();
+                    if (!/^\d{2}:\d{2}$/.test(v)) {
+                        alert('Preencha no formato mm:ss. Exemplo: 09:30 para nove minutos e trinta segundos.');
+                        return;
+                    }
+                    if (parseInt(v.slice(3), 10) > 59) {
+                        alert('Os segundos devem estar entre 00 e 59.');
+                        return;
+                    }
+                    saveAndNext(item.key, v);
+                };
+
+                inputArea.appendChild(input);
+                inputArea.appendChild(btnNext);
+                setTimeout(() => input.focus(), 100);
 
             } else {
                 const input = document.createElement('input');
