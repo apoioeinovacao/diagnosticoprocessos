@@ -6,24 +6,24 @@
     <title>Teste Industrial de Farinha</title>
     <style>
         :root { --azul-netuno: #1B2631; --azul-secundario: #2E4053; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--azul-netuno); 
-            color: #333; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--azul-netuno);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
         }
-        .card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
-            max-width: 600px; 
-            width: 90%; 
-            text-align: center; 
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
         }
         .hidden { display: none !important; }
         h2 { color: var(--azul-netuno); margin-bottom: 20px; }
@@ -37,15 +37,18 @@
         .btn-secondary { background: var(--azul-secundario); color: white; width: 100%; }
         .dynamic-btn { background: #f1f2f6; color: #333; border: 2px solid #ddd; flex: 1; min-width: 60px; }
         .dynamic-btn:hover { background: var(--azul-netuno); color: white; border-color: var(--azul-netuno); }
-        #result-display { 
-            text-align: left; 
-            background: #f8f9fa; 
-            padding: 25px; 
-            border-left: 6px solid var(--azul-netuno); 
-            margin-top: 20px; 
-            border-radius: 4px; 
+        #result-display {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 25px;
+            border-left: 6px solid var(--azul-netuno);
+            margin-top: 20px;
+            border-radius: 4px;
         }
         .status { font-size: 14px; color: #1D8348; margin-top: 20px; font-weight: bold; }
+        /* [NOVO] separador visual */
+        .hub-divider { border: none; border-top: 1px solid #e0e0e0; margin: 18px 0 8px; }
+        .btn-reologia { background: #1D6F5A; color: white; width: 100%; }
     </style>
 </head>
 <body>
@@ -57,6 +60,9 @@
         <div class="btn-group" style="flex-direction: column;">
             <button class="btn-primary" onclick="showStep('step-novo')">Novo Teste</button>
             <button class="btn-secondary" onclick="showStep('step-anexar')">Anexar Evidência/Foto</button>
+            <!-- [NOVO] Formulário independente -->
+            <hr class="hub-divider">
+            <button class="btn-reologia" onclick="showStep('step-reologia')">Reologia de Farinhas</button>
         </div>
     </div>
 
@@ -76,6 +82,15 @@
         <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
     </div>
 
+    <!-- [NOVO] Tela inicial da Reologia -->
+    <div id="step-reologia" class="hidden">
+        <h2>Reologia de Farinhas</h2>
+        <p>Informe o código do teste já cadastrado (consulte na planilha). Os resultados serão gravados na mesma linha do teste.</p>
+        <input type="text" id="reologiaCode" placeholder="Ex: TF020261">
+        <button class="btn-reologia" onclick="startReologia()">Iniciar Reologia</button>
+        <button class="btn-secondary" style="margin-top: 10px; background: #95a5a6;" onclick="location.reload()">Voltar</button>
+    </div>
+
     <div id="step-questions" class="hidden">
         <div id="block-name" class="block-tag"></div>
         <div id="question-text" class="question-text"></div>
@@ -88,13 +103,18 @@
             <p>Os dados foram estruturados e enviados para o servidor.</p>
         </div>
         <p id="sending-status" class="status">Sincronizando com o Power Automate...</p>
+        <!-- [NOVO] Correção de código (só aparece se a Reologia não achar o código) -->
+        <div id="retry-area" class="hidden" style="margin-top: 15px;">
+            <input type="text" id="retryCode" placeholder="Digite o código correto">
+            <button class="btn-reologia" onclick="retryReologia()">Reenviar com este código</button>
+        </div>
         <button class="btn-primary" style="margin-top:20px; background: #666;" onclick="location.reload()">Voltar ao Início</button>
     </div>
 </div>
 
 <script>
     let currentIdx = 0;
-    let answersData = {}; 
+    let answersData = {};
     let activeFlow = [];
 
     const baseQuestions = [
@@ -114,10 +134,31 @@
         { type: "text", b: "PROCESSO", q: "Temperatura do Pão na entrada túnel congelamento (°C):", key: "Temp_Pao_Tunel" }
     ];
 
+    // =====================================================================
+    // [NOVO] REOLOGIA DE FARINHAS
+    // Grava 8 resultados na MESMA linha do teste (planilha atual),
+    // nas 8 colunas novas depois de "Foto". Quem grava é um fluxo NOVO.
+    // Tipos aceitos: "text", "date", "tempo" (mm:ss), "choice" (com options)
+    // =====================================================================
+    const reologiaQuestions = [
+        { type: "text", b: "REOLOGIA", q: "Falling Number:", key: "Falling_Number" },
+        { type: "text", b: "REOLOGIA", q: "Estabilidade:", key: "Estabilidade" },
+        { type: "text", b: "REOLOGIA", q: "Tempo de desenvolvimento:", key: "Tempo_Desenvolvimento" },
+        { type: "text", b: "REOLOGIA", q: "ITM:", key: "ITM" },
+        { type: "text", b: "REOLOGIA", q: "W (Força):", key: "W_Forca" },
+        { type: "text", b: "REOLOGIA", q: "P (Tenacidade):", key: "P_Tenacidade" },
+        { type: "text", b: "REOLOGIA", q: "L (Elasticidade):", key: "L_Elasticidade" },
+        { type: "text", b: "REOLOGIA", q: "P/L:", key: "P_L" }
+    ];
+
+    // [NOVO] URL do fluxo NOVO de Reologia (gatilho HTTP do fluxo novo)
+    const URL_REOLOGIA = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/07/workflows/1eb09d768ad54803adc439c3b8b139cd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2o5nWCSKjn8udIHOMnIcC1XdK2swQEsshzYSt1PTx30";
+
     function showStep(stepId) {
         document.getElementById('step-action').classList.add('hidden');
         document.getElementById('step-novo').classList.add('hidden');
         document.getElementById('step-anexar').classList.add('hidden');
+        document.getElementById('step-reologia').classList.add('hidden'); // [NOVO]
         document.getElementById('step-questions').classList.add('hidden');
         document.getElementById('step-result').classList.add('hidden');
         document.getElementById(stepId).classList.remove('hidden');
@@ -152,6 +193,21 @@
             { type: "file", b: "EVIDÊNCIAS", q: `Anexe a foto referente ao teste ${searchCode}:`, key_name: "Foto_Nome", key_base64: "Foto_Base64" }
         ];
 
+        showStep('step-questions');
+        updateScreen();
+    }
+
+    // [NOVO] Rota 3: Reologia de Farinhas (vai para OUTRO fluxo)
+    function startReologia() {
+        const codigo = document.getElementById('reologiaCode').value.trim().toUpperCase();
+        if (!codigo) { alert("Informe o código do teste."); return; }
+
+        answersData = {
+            Acao: "Reologia",
+            CodigoTeste: codigo
+        };
+
+        activeFlow = [...reologiaQuestions];
         showStep('step-questions');
         updateScreen();
     }
@@ -265,7 +321,12 @@
 
     function showResult() {
         showStep('step-result');
-        sendToPowerAutomate();
+        // [NOVO] Desvio: Reologia vai para o fluxo novo; Novo/Anexar seguem iguais
+        if (answersData.Acao === "Reologia") {
+            sendToReologia();
+        } else {
+            sendToPowerAutomate();
+        }
     }
 
     async function sendToPowerAutomate() {
@@ -285,6 +346,41 @@
             document.getElementById('sending-status').innerText = "Falha na comunicação com o servidor.";
             document.getElementById('sending-status').style.color = "#A93226";
         }
+    }
+
+    // [NOVO] Envio para o fluxo de Reologia
+    async function sendToReologia() {
+        const status = document.getElementById('sending-status');
+        status.style.color = "#1D8348";
+        status.innerText = "Sincronizando com o Power Automate...";
+        document.getElementById('retry-area').classList.add('hidden');
+        try {
+            const response = await fetch(URL_REOLOGIA, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(answersData)
+            });
+            if (response.ok) {
+                status.innerText = `Reologia gravada no teste ${answersData.CodigoTeste}!`;
+            } else if (response.status === 404) {
+                status.innerText = `Código ${answersData.CodigoTeste} não encontrado na planilha. Nada foi gravado — corrija o código abaixo (as respostas foram mantidas).`;
+                status.style.color = "#A93226";
+                document.getElementById('retry-area').classList.remove('hidden');
+            } else {
+                throw new Error("Erro no endpoint.");
+            }
+        } catch (e) {
+            status.innerText = "Falha na comunicação com o servidor.";
+            status.style.color = "#A93226";
+        }
+    }
+
+    // [NOVO] Reenvia as mesmas respostas com o código corrigido
+    function retryReologia() {
+        const novo = document.getElementById('retryCode').value.trim().toUpperCase();
+        if (!novo) { alert("Informe o código do teste."); return; }
+        answersData.CodigoTeste = novo;
+        sendToReologia();
     }
 </script>
 
