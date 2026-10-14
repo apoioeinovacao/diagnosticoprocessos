@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parâmetros de Masseira</title>
+    <style>
+        :root { --azul-netuno: #1B2631; --azul-secundario: #2E4053; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--azul-netuno);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+        .hidden { display: none !important; }
+        h2 { color: var(--azul-netuno); margin-bottom: 20px; }
+        p { line-height: 1.6; color: #555; margin-bottom: 20px; }
+        .block-tag { font-size: 0.75em; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .question-text { min-height: 60px; display: flex; align-items: center; justify-content: center; font-size: 1.15em; font-weight: 500; margin-bottom: 20px;}
+        input { padding: 15px; width: 100%; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
+        .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        button { padding: 15px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-primary { background: var(--azul-netuno); color: white; width: 100%; }
+        .btn-secondary { background: var(--azul-secundario); color: white; width: 100%; }
+        .dynamic-btn { background: #f1f2f6; color: #333; border: 2px solid #ddd; flex: 1; min-width: 60px; }
+        .dynamic-btn:hover { background: var(--azul-netuno); color: white; border-color: var(--azul-netuno); }
+        #result-display {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 25px;
+            border-left: 6px solid var(--azul-netuno);
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        .status { font-size: 14px; color: #1D8348; margin-top: 20px; font-weight: bold; }
+        .progresso { font-size: 0.8em; color: #95a5a6; margin-bottom: 6px; }
+        .link-voltar { background: none; border: none; color: #7f8c8d; font-size: 14px; font-weight: normal; text-decoration: underline; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <!-- Tela inicial -->
+    <div id="step-inicio">
+        <h2>Parâmetros de Masseira</h2>
+        <p>Informe o nome do responsável pelo preenchimento para iniciar o registro.</p>
+        <input type="text" id="userName" placeholder="Nome do Responsável">
+        <button class="btn-primary" onclick="startMasseira()">Iniciar Registro</button>
+    </div>
+
+    <!-- Perguntas -->
+    <div id="step-questions" class="hidden">
+        <div id="progresso" class="progresso"></div>
+        <div id="block-name" class="block-tag"></div>
+        <div id="question-text" class="question-text"></div>
+        <div id="input-area"></div>
+        <button id="btn-anterior" class="link-voltar" onclick="voltarPergunta()">← Pergunta anterior</button>
+    </div>
+
+    <!-- Resultado -->
+    <div id="step-result" class="hidden">
+        <h2>Operação Concluída</h2>
+        <div id="result-display">
+            <p>Os dados foram estruturados e enviados para o servidor.</p>
+        </div>
+        <p id="sending-status" class="status">Sincronizando com o Power Automate...</p>
+        <button class="btn-primary" style="margin-top:20px; background: #666;" onclick="location.reload()">Novo Registro</button>
+    </div>
+</div>
+
+<script>
+    // =====================================================================
+    // URL do fluxo do Power Automate (gatilho "Quando uma solicitação HTTP
+    // é recebida"). Cole aqui entre as aspas depois de criar o fluxo.
+    // =====================================================================
+    const URL_MASSEIRA = "https://defaultc344a6d551e24992bf914719facad7.20.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/aead6827cb5c4cacb4386e53aa583f26/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Ir382a8Mi2fq20_pxv-87GmPZK1DqqwPjULIrJojLbg";
+
+    let currentIdx = 0;
+    let answersData = {};
+    let activeFlow = [];
+
+    // Tipos aceitos: "text", "date", "tempo" (mm:ss), "choice" (com options)
+    // Em "choice", cada opção pode ser texto simples ou { label, value }
+    // (label = o que aparece no botão; value = o que vai para a planilha).
+    const masseiraQuestions = [
+        { type: "date",   b: "IDENTIFICAÇÃO", q: "Data:", key: "Data" },
+        { type: "text",   b: "IDENTIFICAÇÃO", q: "Turno:", key: "Turno" },
+        { type: "choice", b: "IDENTIFICAÇÃO", q: "Unidade:", options: ["Lagoinha", "Uruguai"], key: "Unidade" },
+        { type: "text",   b: "FARINHAS", q: "Farinha A (fornecedor):", key: "Farinha_A_Fornecedor" },
+        { type: "text",   b: "FARINHAS", q: "Lote Farinha A:", key: "Lote_Farinha_A" },
+        { type: "text",   b: "FARINHAS", q: "Farinha B (fornecedor):", key: "Farinha_B_Fornecedor" },
+        { type: "text",   b: "FARINHAS", q: "Lote Farinha B:", key: "Lote_Farinha_B" },
+        { type: "text",   b: "HIDRATAÇÃO", q: "Quantidade de água:", key: "Quantidade_Agua" },
+        { type: "text",   b: "HIDRATAÇÃO", q: "Quantidade de gelo:", key: "Quantidade_Gelo" },
+        { type: "text",   b: "HIDRATAÇÃO", q: "Temperatura da água:", key: "Temp_Agua" },
+        { type: "text",   b: "MASSA", q: "Temperatura da massa (masseira):", key: "Temp_Massa_Masseira" },
+        { type: "choice", b: "MASSA", q: "Percepção da massa:", key: "Percepcao_Massa",
+          options: [
+              { label: "(A) Dura",     value: "Dura" },
+              { label: "(B) Firme",    value: "Firme" },
+              { label: "(C) Mole",     value: "Mole" },
+              { label: "(D) Pegajosa", value: "Pegajosa" }
+          ] }
+    ];
+
+    function showStep(stepId) {
+        ['step-inicio', 'step-questions', 'step-result'].forEach(id =>
+            document.getElementById(id).classList.add('hidden'));
+        document.getElementById(stepId).classList.remove('hidden');
+    }
+
+    function startMasseira() {
+        const responsavel = document.getElementById('userName').value;
+        if (!responsavel.trim()) { alert("Informe o nome do responsável."); return; }
+
+        answersData = { Responsavel: responsavel.trim() };
+        activeFlow = [...masseiraQuestions];
+        currentIdx = 0;
+        showStep('step-questions');
+        updateScreen();
+    }
+
+    function voltarPergunta() {
+        if (currentIdx > 0) { currentIdx--; updateScreen(); }
+    }
+
+    function updateScreen() {
+        if (currentIdx >= activeFlow.length) { showResult(); return; }
+
+        const item = activeFlow[currentIdx];
+        document.getElementById('progresso').innerText = `Pergunta ${currentIdx + 1} de ${activeFlow.length}`;
+        document.getElementById('block-name').innerText = item.b;
+        document.getElementById('question-text').innerText = item.q;
+        document.getElementById('btn-anterior').style.visibility = currentIdx > 0 ? 'visible' : 'hidden';
+        const inputArea = document.getElementById('input-area');
+        inputArea.innerHTML = '';
+        const anterior = answersData[item.key];
+
+        if (item.type === 'choice') {
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'btn-group';
+            item.options.forEach(opt => {
+                const label = typeof opt === 'string' ? opt : opt.label;
+                const value = typeof opt === 'string' ? opt : opt.value;
+                const btn = document.createElement('button');
+                btn.className = 'dynamic-btn';
+                btn.innerText = label;
+                if (anterior === value) { btn.style.borderColor = 'var(--azul-netuno)'; }
+                btn.onclick = () => saveAndNext(item.key, value);
+                btnContainer.appendChild(btn);
+            });
+            inputArea.appendChild(btnContainer);
+
+        } else if (item.type === 'tempo') {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'mm:ss (ex: 09:30)';
+            input.inputMode = 'numeric';
+            input.maxLength = 5;
+            if (anterior) input.value = anterior;
+            input.oninput = () => {
+                let v = input.value.replace(/\D/g, '').slice(0, 4);
+                if (v.length > 2) v = v.slice(0, 2) + ':' + v.slice(2);
+                input.value = v;
+            };
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn-primary';
+            btnNext.innerText = 'Continuar';
+            btnNext.onclick = () => {
+                const v = input.value.trim();
+                if (!/^\d{2}:\d{2}$/.test(v)) { alert('Preencha no formato mm:ss. Exemplo: 09:30.'); return; }
+                if (parseInt(v.slice(3), 10) > 59) { alert('Os segundos devem estar entre 00 e 59.'); return; }
+                saveAndNext(item.key, v);
+            };
+            input.onkeydown = e => { if (e.key === 'Enter') btnNext.click(); };
+            inputArea.appendChild(input);
+            inputArea.appendChild(btnNext);
+            setTimeout(() => input.focus(), 100);
+
+        } else {
+            const input = document.createElement('input');
+            input.type = item.type === 'date' ? 'date' : 'text';
+            input.placeholder = "Sua resposta...";
+            if (anterior) {
+                input.value = anterior;
+            } else if (item.type === 'date') {
+                // já sugere a data de hoje
+                const d = new Date();
+                input.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn-primary';
+            btnNext.innerText = 'Continuar';
+            btnNext.onclick = () => {
+                if (!input.value.trim()) { alert("Por favor, preencha o campo."); return; }
+                saveAndNext(item.key, input.value.trim());
+            };
+            input.onkeydown = e => { if (e.key === 'Enter') btnNext.click(); };
+            inputArea.appendChild(input);
+            inputArea.appendChild(btnNext);
+            setTimeout(() => input.focus(), 100);
+        }
+    }
+
+    function saveAndNext(key, value) {
+        answersData[key] = value;
+        currentIdx++;
+        updateScreen();
+    }
+
+    function showResult() {
+        showStep('step-result');
+        sendToPowerAutomate();
+    }
+
+    async function sendToPowerAutomate() {
+        const status = document.getElementById('sending-status');
+        if (!URL_MASSEIRA) {
+            status.innerText = "Fluxo do Power Automate ainda não configurado — nada foi gravado.";
+            status.style.color = "#A93226";
+            return;
+        }
+        try {
+            const response = await fetch(URL_MASSEIRA, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(answersData)
+            });
+            if (response.ok) {
+                status.innerText = "Registro processado com sucesso!";
+            } else {
+                throw new Error("Erro no endpoint.");
+            }
+        } catch (e) {
+            status.innerText = "Falha na comunicação com o servidor.";
+            status.style.color = "#A93226";
+        }
+    }
+</script>
+
+</body>
+</html>
